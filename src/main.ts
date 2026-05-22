@@ -66,6 +66,7 @@ const STORAGE_PLAYER_NAME = "color_game_player_name";
 const DEFAULT_DIFFICULTY: Difficulty = "easy";
 const ALL_CATEGORY_LABEL = "All categories";
 const COUNTDOWN_STEPS = ["Ready", "Set", "Go"];
+const IMAGE_PRELOAD_TIMEOUT_MS = 15000;
 
 const icons = {
   target:
@@ -112,6 +113,7 @@ let challengeScorePosted = false;
 let lastChallengeShareUrl: string | undefined;
 let countdownInProgress = false;
 let pickerHasSelection = false;
+const imagePreloadCache = new Map<string, Promise<void>>();
 
 class Sfx {
   private ctx: AudioContext | null = null;
@@ -477,6 +479,7 @@ bindEvents();
 void refreshCategoryOptions();
 applyChallengeIntro();
 void loadPendingChallenge();
+registerServiceWorker();
 if (debugToolsEnabled) {
   void import("./debugColorRemover").then(({ initDebugColorRemover }) => {
     initDebugColorRemover();
@@ -604,6 +607,7 @@ async function startGame(): Promise<void> {
   } else {
     queue = await buildRoundQueue();
   }
+  preloadPromptImages(queue);
   roundIndex = 0;
   results = [];
 
@@ -630,19 +634,31 @@ async function showPickerWithCountdown(): Promise<void> {
   refs.submitButton.disabled = true;
   refs.nextButton.disabled = true;
 
-  await runCountdown();
+  const prompt = currentPrompt();
+  clearPickerImage();
+  const currentImageReady = preloadPromptImage(prompt);
+  preloadUpcomingImages(roundIndex + 1);
+
+  showCountdownOverlay();
+  await Promise.all([
+    runCountdownSteps(),
+    waitForImagePreload(currentImageReady, IMAGE_PRELOAD_TIMEOUT_MS),
+  ]);
   showPicker();
+  await hideCountdownOverlay();
 
   refs.submitButton.disabled = false;
   refs.nextButton.disabled = false;
   countdownInProgress = false;
 }
 
-async function runCountdown(): Promise<void> {
+function showCountdownOverlay(): void {
   refs.countdownOverlay.hidden = false;
   refs.countdownOverlay.setAttribute("aria-hidden", "false");
   refs.countdownOverlay.classList.add("active");
+}
 
+async function runCountdownSteps(): Promise<void> {
   for (const [index, step] of COUNTDOWN_STEPS.entries()) {
     refs.countdownText.textContent = step;
     refs.countdownOverlay.dataset.step = String(index);
@@ -652,12 +668,75 @@ async function runCountdown(): Promise<void> {
     sfx.countdown(index);
     await wait(520);
   }
+}
 
+async function hideCountdownOverlay(): Promise<void> {
   refs.countdownOverlay.classList.remove("active", "tick");
   refs.countdownOverlay.setAttribute("aria-hidden", "true");
   await wait(120);
   refs.countdownOverlay.hidden = true;
   refs.countdownOverlay.removeAttribute("data-step");
+}
+
+function clearPickerImage(): void {
+  refs.pickerImage.removeAttribute("src");
+  refs.pickerImage.alt = "";
+}
+
+function preloadPromptImages(prompts: PromptItem[]): void {
+  prompts.forEach((prompt) => {
+    void preloadPromptImage(prompt);
+  });
+}
+
+function preloadUpcomingImages(startIndex: number): void {
+  preloadPromptImages(queue.slice(startIndex));
+}
+
+function preloadPromptImage(prompt: PromptItem): Promise<void> {
+  const cached = imagePreloadCache.get(prompt.imageSrc);
+  if (cached) return cached;
+
+  const preload = new Promise<void>((resolve) => {
+    const image = new Image();
+    image.decoding = "async";
+    image.onload = () => {
+      const decoded = image.decode?.();
+      if (decoded) void decoded.then(resolve, resolve);
+      else resolve();
+    };
+    image.onerror = () => resolve();
+    image.src = prompt.imageSrc;
+  });
+
+  imagePreloadCache.set(prompt.imageSrc, preload);
+  return preload;
+}
+
+function waitForImagePreload(
+  preload: Promise<void>,
+  timeoutMs: number,
+): Promise<void> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      resolve();
+    };
+
+    const timeoutId = window.setTimeout(finish, timeoutMs);
+    void preload.then(
+      () => {
+        window.clearTimeout(timeoutId);
+        finish();
+      },
+      () => {
+        window.clearTimeout(timeoutId);
+        finish();
+      },
+    );
+  });
 }
 
 function showPicker(): void {
@@ -1543,6 +1622,19 @@ function requestMobileFullscreen(): void {
   } catch {
     // Browser fullscreen support varies on mobile; layout fixes still apply.
   }
+}
+
+function registerServiceWorker(): void {
+  if (!("serviceWorker" in navigator)) return;
+  if (!import.meta.env.PROD) return;
+
+  const baseUrl = import.meta.env.BASE_URL || "/";
+  const serviceWorkerUrl = `${baseUrl}sw.js`;
+  void window.addEventListener("load", () => {
+    void navigator.serviceWorker
+      .register(serviceWorkerUrl, { scope: baseUrl })
+      .catch(() => {});
+  });
 }
 
 function currentPrompt(): PromptItem {

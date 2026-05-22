@@ -1,0 +1,64 @@
+const CACHE_NAME = "color-game-v1";
+const SHELL_FILES = ["./", "./manifest.webmanifest", "./pwa-icon.svg"];
+
+function scopedUrl(path) {
+  return new URL(path, self.registration.scope).toString();
+}
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.addAll(SHELL_FILES.map(scopedUrl)))
+      .catch(() => undefined)
+      .then(() => self.skipWaiting()),
+  );
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((key) => caches.delete(key)),
+        ),
+      )
+      .then(() => self.clients.claim()),
+  );
+});
+
+self.addEventListener("fetch", (event) => {
+  const { request } = event;
+  if (request.method !== "GET") return;
+
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+
+  if (request.mode === "navigate") {
+    event.respondWith(fetchWithCacheFallback(request, scopedUrl("./")));
+    return;
+  }
+
+  event.respondWith(fetchWithCacheFallback(request));
+});
+
+async function fetchWithCacheFallback(request, fallbackUrl) {
+  const cache = await caches.open(CACHE_NAME);
+
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      await cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    return (
+      (await cache.match(request)) ||
+      (fallbackUrl ? await cache.match(fallbackUrl) : undefined) ||
+      Response.error()
+    );
+  }
+}
