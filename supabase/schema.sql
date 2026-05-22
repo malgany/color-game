@@ -11,6 +11,7 @@ create table if not exists public.color_prompts (
   id uuid primary key default gen_random_uuid(),
   slug text not null,
   difficulty public.color_difficulty not null default 'easy',
+  category text not null default 'general',
   name text not null,
   image_src text not null,
   target_h smallint not null check (target_h between 0 and 359),
@@ -34,6 +35,12 @@ create table if not exists public.color_scores (
 
 create index if not exists color_prompts_difficulty_active_sort_idx
   on public.color_prompts (difficulty, active, sort_order);
+
+alter table public.color_prompts
+  add column if not exists category text not null default 'general';
+
+create index if not exists color_prompts_category_idx
+  on public.color_prompts (category);
 
 create index if not exists color_scores_difficulty_score_idx
   on public.color_scores (difficulty, total_score desc, created_at asc);
@@ -68,6 +75,7 @@ grant select, insert on public.color_scores to anon, authenticated;
 insert into public.color_prompts (
   slug,
   difficulty,
+  category,
   name,
   image_src,
   target_h,
@@ -86,23 +94,24 @@ select
   seed.sort_order
 from (
   values
-    ('lemon-star', 'easy', 'Lemon star', '/assets/prompts/lemon-star.png', 52, 90, 95, 10),
-    ('cherry-cap', 'easy', 'Cherry cap', '/assets/prompts/cherry-cap.png', 356, 78, 88, 20),
-    ('ocean-drop', 'easy', 'Ocean drop', '/assets/prompts/ocean-drop.png', 202, 86, 75, 30),
-    ('lime-leaf', 'easy', 'Lime leaf', '/assets/prompts/lime-leaf.png', 112, 75, 78, 40),
-    ('violet-bolt', 'easy', 'Violet bolt', '/assets/prompts/violet-bolt.png', 278, 70, 82, 50),
-    ('lemon-star', 'hard', 'Lemon star', '/assets/prompts/lemon-star.png', 52, 90, 95, 10),
-    ('cherry-cap', 'hard', 'Cherry cap', '/assets/prompts/cherry-cap.png', 356, 78, 88, 20),
-    ('ocean-drop', 'hard', 'Ocean drop', '/assets/prompts/ocean-drop.png', 202, 86, 75, 30),
-    ('lime-leaf', 'hard', 'Lime leaf', '/assets/prompts/lime-leaf.png', 112, 75, 78, 40),
-    ('violet-bolt', 'hard', 'Violet bolt', '/assets/prompts/violet-bolt.png', 278, 70, 82, 50),
-    ('lemon-star', 'brutal', 'Lemon star', '/assets/prompts/lemon-star.png', 52, 90, 95, 10),
-    ('cherry-cap', 'brutal', 'Cherry cap', '/assets/prompts/cherry-cap.png', 356, 78, 88, 20),
-    ('ocean-drop', 'brutal', 'Ocean drop', '/assets/prompts/ocean-drop.png', 202, 86, 75, 30),
-    ('lime-leaf', 'brutal', 'Lime leaf', '/assets/prompts/lime-leaf.png', 112, 75, 78, 40),
-    ('violet-bolt', 'brutal', 'Violet bolt', '/assets/prompts/violet-bolt.png', 278, 70, 82, 50)
-) as seed(slug, difficulty, name, image_src, target_h, target_s, target_b, sort_order)
+    ('lemon-star', 'easy', 'general', 'Lemon star', '/assets/prompts/lemon-star.png', 52, 90, 95, 10),
+    ('cherry-cap', 'easy', 'general', 'Cherry cap', '/assets/prompts/cherry-cap.png', 356, 78, 88, 20),
+    ('ocean-drop', 'easy', 'general', 'Ocean drop', '/assets/prompts/ocean-drop.png', 202, 86, 75, 30),
+    ('lime-leaf', 'easy', 'general', 'Lime leaf', '/assets/prompts/lime-leaf.png', 112, 75, 78, 40),
+    ('violet-bolt', 'easy', 'general', 'Violet bolt', '/assets/prompts/violet-bolt.png', 278, 70, 82, 50),
+    ('lemon-star', 'hard', 'general', 'Lemon star', '/assets/prompts/lemon-star.png', 52, 90, 95, 10),
+    ('cherry-cap', 'hard', 'general', 'Cherry cap', '/assets/prompts/cherry-cap.png', 356, 78, 88, 20),
+    ('ocean-drop', 'hard', 'general', 'Ocean drop', '/assets/prompts/ocean-drop.png', 202, 86, 75, 30),
+    ('lime-leaf', 'hard', 'general', 'Lime leaf', '/assets/prompts/lime-leaf.png', 112, 75, 78, 40),
+    ('violet-bolt', 'hard', 'general', 'Violet bolt', '/assets/prompts/violet-bolt.png', 278, 70, 82, 50),
+    ('lemon-star', 'brutal', 'general', 'Lemon star', '/assets/prompts/lemon-star.png', 52, 90, 95, 10),
+    ('cherry-cap', 'brutal', 'general', 'Cherry cap', '/assets/prompts/cherry-cap.png', 356, 78, 88, 20),
+    ('ocean-drop', 'brutal', 'general', 'Ocean drop', '/assets/prompts/ocean-drop.png', 202, 86, 75, 30),
+    ('lime-leaf', 'brutal', 'general', 'Lime leaf', '/assets/prompts/lime-leaf.png', 112, 75, 78, 40),
+    ('violet-bolt', 'brutal', 'general', 'Violet bolt', '/assets/prompts/violet-bolt.png', 278, 70, 82, 50)
+) as seed(slug, difficulty, category, name, image_src, target_h, target_s, target_b, sort_order)
 on conflict (slug, difficulty) do update set
+  category = excluded.category,
   name = excluded.name,
   image_src = excluded.image_src,
   target_h = excluded.target_h,

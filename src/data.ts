@@ -12,6 +12,7 @@ type PromptRow = {
   difficulty: Difficulty;
   name: string;
   image_src: string;
+  category?: string | null;
   target_h: number;
   target_s: number;
   target_b: number;
@@ -49,6 +50,7 @@ export type LeaderboardEntry = {
 };
 
 const LOCAL_SCORES_KEY = "color_game_local_scores";
+const GENERATED_PROMPTS_SRC = "/assets/prompts/generated/prompts.json";
 
 export { difficultyLabels };
 export type { Difficulty, PromptItem };
@@ -56,6 +58,8 @@ export type { Difficulty, PromptItem };
 export async function loadPrompts(
   difficulty: Difficulty,
 ): Promise<PromptItem[]> {
+  let remotePrompts: PromptItem[] = [];
+
   if (supabase) {
     const { data, error } = await supabase
       .from("color_prompts")
@@ -67,17 +71,36 @@ export async function loadPrompts(
       .order("sort_order", { ascending: true });
 
     if (!error && data?.length) {
-      return (data as PromptRow[]).map((row) => ({
+      remotePrompts = (data as PromptRow[]).map((row) => ({
         id: row.slug,
         name: row.name,
         imageSrc: row.image_src,
+        category: row.category || undefined,
         targetHsb: [row.target_h, row.target_s, row.target_b],
         difficulty: row.difficulty,
       }));
     }
   }
 
-  return promptCatalog.map((prompt) => ({ ...prompt, difficulty }));
+  const generatedPrompts = await loadGeneratedPrompts(difficulty);
+  if (remotePrompts.length) return [...remotePrompts, ...generatedPrompts];
+
+  return [
+    ...promptCatalog.map((prompt) => ({ ...prompt, difficulty })),
+    ...generatedPrompts,
+  ];
+}
+
+export async function loadCategories(): Promise<string[]> {
+  const generatedPrompts = await loadGeneratedPrompts();
+  return Array.from(
+    new Set(
+      generatedPrompts
+        .map((prompt) => prompt.category)
+        .filter((category): category is string => Boolean(category))
+        .sort((a, b) => a.localeCompare(b)),
+    ),
+  );
 }
 
 export async function saveScore(
@@ -137,6 +160,75 @@ function scoreRowToEntry(row: ScoreRow): LeaderboardEntry {
     difficulty: row.difficulty,
     createdAt: row.created_at,
   };
+}
+
+async function loadGeneratedPrompts(
+  difficulty?: Difficulty,
+): Promise<PromptItem[]> {
+  try {
+    const response = await fetch(`${GENERATED_PROMPTS_SRC}?t=${Date.now()}`, {
+      cache: "no-store",
+    });
+    if (!response.ok) return [];
+
+    const value = await response.json();
+    if (!Array.isArray(value)) return [];
+
+    return value
+      .filter(isGeneratedPrompt)
+      .filter((prompt) => !difficulty || prompt.difficulty === difficulty)
+      .map((prompt) => ({
+        id: prompt.slug,
+        name: prompt.name,
+        imageSrc: withGeneratedVersion(prompt.imageSrc, prompt.createdAt),
+        category: prompt.category,
+        targetHsb: prompt.targetHsb,
+        difficulty: prompt.difficulty,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+function isGeneratedPrompt(value: unknown): value is {
+  slug: string;
+  name: string;
+  imageSrc: string;
+  category?: string;
+  targetHsb: HsbColor;
+  difficulty: Difficulty;
+  createdAt?: string;
+} {
+  if (!value || typeof value !== "object") return false;
+  const prompt = value as Partial<{
+    slug: string;
+    name: string;
+    imageSrc: string;
+    category?: string;
+    targetHsb: unknown;
+    difficulty: string;
+    createdAt?: string;
+  }>;
+
+  return (
+    typeof prompt.slug === "string" &&
+    typeof prompt.name === "string" &&
+    typeof prompt.imageSrc === "string" &&
+    (typeof prompt.category === "string" || prompt.category === undefined) &&
+    (typeof prompt.createdAt === "string" || prompt.createdAt === undefined) &&
+    Array.isArray(prompt.targetHsb) &&
+    prompt.targetHsb.length === 3 &&
+    prompt.targetHsb.every((channel) => typeof channel === "number") &&
+    (prompt.difficulty === "easy" ||
+      prompt.difficulty === "hard" ||
+      prompt.difficulty === "brutal")
+  );
+}
+
+function withGeneratedVersion(imageSrc: string, createdAt?: string): string {
+  if (!createdAt) return imageSrc;
+  const separator = imageSrc.includes("?") ? "&" : "?";
+  return `${imageSrc}${separator}v=${encodeURIComponent(createdAt)}`;
 }
 
 function readLocalScores(): LeaderboardEntry[] {

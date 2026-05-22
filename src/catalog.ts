@@ -14,6 +14,7 @@ export type PromptItem = {
   name: string;
   imageSrc: string;
   targetHsb: HsbColor;
+  category?: string;
   difficulty?: Difficulty;
 };
 

@@ -1,0 +1,137 @@
+[
+    {
+        "slug":  "a-pantera-cor-de-rosa",
+        "name":  "A Pantera Cor-de-Rosa",
+        "category":  "Desenhos",
+        "difficulty":  "easy",
+        "imageSrc":  "/assets/prompts/generated/a-pantera-cor-de-rosa.png",
+        "targetHsb":  [
+                          346,
+                          34,
+                          96
+                      ],
+        "active":  true,
+        "sortOrder":  10,
+        "createdAt":  "2026-05-22T06:06:00.629Z"
+    },
+    {
+        "slug":  "a-pantera-cor-de-rosa",
+        "name":  "A Pantera Cor-de-Rosa",
+        "category":  "Desenhos",
+        "difficulty":  "hard",
+        "imageSrc":  "/assets/prompts/generated/a-pantera-cor-de-rosa.png",
+        "targetHsb":  [
+                          346,
+                          34,
+                          96
+                      ],
+        "active":  true,
+        "sortOrder":  10,
+        "createdAt":  "2026-05-22T06:06:00.629Z"
+    },
+    {
+        "slug":  "a-pantera-cor-de-rosa",
+        "name":  "A Pantera Cor-de-Rosa",
+        "category":  "Desenhos",
+        "difficulty":  "brutal",
+        "imageSrc":  "/assets/prompts/generated/a-pantera-cor-de-rosa.png",
+        "targetHsb":  [
+                          346,
+                          34,
+                          96
+                      ],
+        "active":  true,
+        "sortOrder":  10,
+        "createdAt":  "2026-05-22T06:06:00.629Z"
+    },
+    {
+        "slug":  "pica-pau",
+        "name":  "Pica-pau",
+        "category":  "Desenhos",
+        "difficulty":  "easy",
+        "imageSrc":  "/assets/prompts/generated/pica-pau.png",
+        "targetHsb":  [
+                          218,
+                          65,
+                          72
+                      ],
+        "active":  true,
+        "sortOrder":  20,
+        "createdAt":  "2026-05-22T06:53:01.151Z"
+    },
+    {
+        "slug":  "pica-pau",
+        "name":  "Pica-pau",
+        "category":  "Desenhos",
+        "difficulty":  "hard",
+        "imageSrc":  "/assets/prompts/generated/pica-pau.png",
+        "targetHsb":  [
+                          218,
+                          65,
+                          72
+                      ],
+        "active":  true,
+        "sortOrder":  20,
+        "createdAt":  "2026-05-22T06:53:01.151Z"
+    },
+    {
+        "slug":  "pica-pau",
+        "name":  "Pica-pau",
+        "category":  "Desenhos",
+        "difficulty":  "brutal",
+        "imageSrc":  "/assets/prompts/generated/pica-pau.png",
+        "targetHsb":  [
+                          218,
+                          65,
+                          72
+                      ],
+        "active":  true,
+        "sortOrder":  20,
+        "createdAt":  "2026-05-22T06:53:01.151Z"
+    },
+    {
+        "slug":  "tom-and-jerry",
+        "name":  "Tom and Jerry",
+        "category":  "Desenhos",
+        "difficulty":  "easy",
+        "imageSrc":  "/assets/prompts/generated/tom-and-jerry.png",
+        "targetHsb":  [
+                          211,
+                          75,
+                          42
+                      ],
+        "active":  true,
+        "sortOrder":  30,
+        "createdAt":  "2026-05-22T07:02:57.471Z"
+    },
+    {
+        "slug":  "tom-and-jerry",
+        "name":  "Tom and Jerry",
+        "category":  "Desenhos",
+        "difficulty":  "hard",
+        "imageSrc":  "/assets/prompts/generated/tom-and-jerry.png",
+        "targetHsb":  [
+                          211,
+                          75,
+                          42
+                      ],
+        "active":  true,
+        "sortOrder":  30,
+        "createdAt":  "2026-05-22T07:02:57.471Z"
+    },
+    {
+        "slug":  "tom-and-jerry",
+        "name":  "Tom and Jerry",
+        "category":  "Desenhos",
+        "difficulty":  "brutal",
+        "imageSrc":  "/assets/prompts/generated/tom-and-jerry.png",
+        "targetHsb":  [
+                          211,
+                          75,
+                          42
+                      ],
+        "active":  true,
+        "sortOrder":  30,
+        "createdAt":  "2026-05-22T07:02:57.471Z"
+    }
+]

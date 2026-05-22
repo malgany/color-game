@@ -2,6 +2,7 @@ import { difficulties } from "./catalog";
 import {
   cleanPlayerName,
   difficultyLabels,
+  loadCategories,
   loadLeaderboard,
   loadPrompts,
   saveScore,
@@ -20,7 +21,13 @@ import {
 } from "./colorMath";
 import "./styles.css";
 
-type Screen = "intro" | "picker" | "result" | "total" | "leaderboard";
+type Screen =
+  | "intro"
+  | "category"
+  | "picker"
+  | "result"
+  | "total"
+  | "leaderboard";
 
 type RoundResult = {
   prompt: PromptItem;
@@ -28,10 +35,16 @@ type RoundResult = {
   score: number;
 };
 
+type CompareDragState = {
+  pointerId: number;
+  rect: DOMRect;
+} | null;
+
 const ROUND_COUNT = 5;
 const STORAGE_THEME = "color_game_theme";
 const STORAGE_MUTED = "color_game_muted";
 const STORAGE_DIFFICULTY = "color_game_difficulty";
+const STORAGE_CATEGORY = "color_game_category";
 const STORAGE_PLAYER_NAME = "color_game_player_name";
 
 const icons = {
@@ -65,7 +78,11 @@ let results: RoundResult[] = [];
 let theme = readTheme();
 let muted = localStorage.getItem(STORAGE_MUTED) === "1";
 let selectedDifficulty = readDifficulty();
+let selectedCategory = localStorage.getItem(STORAGE_CATEGORY) || "all";
 let leaderboardDifficulty: Difficulty = selectedDifficulty;
+let pickerValueHideTimer: number | undefined;
+let availableCategories: string[] = [];
+let compareDragState: CompareDragState = null;
 
 class Sfx {
   private ctx: AudioContext | null = null;
@@ -104,8 +121,9 @@ class Sfx {
     this.tone(1800 + pickerHsb[0] * 4, 0.018, "sine", 0.012);
   }
 
-  scoreTick(): void {
-    this.tone(380 + Math.random() * 180, 0.025, "square", 0.012);
+  scoreRise(progress: number): void {
+    const eased = Math.min(1, Math.max(0, progress));
+    this.tone(180 + eased * 980, 0.055, "sine", 0.014 + eased * 0.014);
   }
 
   scoreLand(): void {
@@ -163,6 +181,8 @@ class Sfx {
 }
 
 const sfx = new Sfx(() => muted);
+const debugToolsEnabled =
+  import.meta.env.DEV && import.meta.env.VITE_DEBUG_TOOLS === "true";
 
 app.innerHTML = `
   <header class="site-bar">
@@ -183,7 +203,6 @@ app.innerHTML = `
           ${icons.leaderboard}
         </button>
         <h1>color</h1>
-        <div id="introDifficultyTabs" class="difficulty-tabs" role="tablist" aria-label="Difficulty"></div>
         <div class="intro-copy">
           <p>Pick the missing color from memory. The transparent part of the image reveals whatever you choose.</p>
           <p>Five images. Ten points each. Get as close as your brain can manage.</p>
@@ -193,8 +212,16 @@ app.innerHTML = `
           <button id="startButton" class="mode-button soundable" type="button" aria-label="Start game">
             ${icons.target}
           </button>
-          <div id="difficultyPill" class="round-pill" aria-label="Selected difficulty">5 rounds</div>
+          <button id="difficultyCycle" class="difficulty-cycle soundable" type="button" aria-label="Change difficulty">Easy</button>
+          <div id="difficultyPill" class="round-pill" aria-label="Selected difficulty">Choose category</div>
         </div>
+      </section>
+
+      <section id="categoryScreen" class="screen category-screen" aria-label="Category selection">
+        <button id="categoryBack" class="mini-close soundable" type="button" aria-label="Back to intro">Close</button>
+        <h2>category</h2>
+        <p>Pick a set of images for this run.</p>
+        <div id="categoryList" class="category-choice-list"></div>
       </section>
 
       <section id="pickerScreen" class="screen picker-screen" aria-label="Color picker">
@@ -218,7 +245,7 @@ app.innerHTML = `
           <img id="pickerImage" class="prompt-image" alt="" draggable="false" />
         </div>
         <div class="picker-values">
-          <span>Your selection</span>
+          <span id="pickerValueLabel">Hue</span>
           <strong id="pickerValues">H180 S80 B90</strong>
         </div>
         <button id="submitButton" class="go-button soundable" type="button" aria-label="Submit color">
@@ -228,22 +255,39 @@ app.innerHTML = `
 
       <section id="resultScreen" class="screen result-screen" aria-label="Round result">
         <button id="resultClose" class="mini-close soundable" type="button" aria-label="Back to intro">Close</button>
+        <span id="resultRound" class="result-round">1/5</span>
         <div class="score-display">
           <span id="roundScoreMain">0</span><span class="score-dot">.</span><span id="roundScoreDecimal">00</span>
         </div>
         <p id="scoreMessage" class="score-message">Close enough to keep playing.</p>
-        <div class="comparison-grid">
-          <div class="comparison-card">
+        <div id="comparisonGrid" class="comparison-grid">
+          <div id="comparePicked" class="comparison-card">
             <div id="pickedPreview" class="mini-preview">
               <img id="pickedImage" class="prompt-image" alt="" draggable="false" />
             </div>
-            <span>Your selection</span>
+            <div class="result-caption">
+              <span>Your selection</span>
+              <strong id="pickedCode">H180 S80 B90</strong>
+            </div>
           </div>
-          <div class="comparison-card">
+          <div id="compareTarget" class="comparison-card">
             <div id="targetPreview" class="mini-preview">
               <img id="targetImage" class="prompt-image" alt="" draggable="false" />
             </div>
-            <span>Original</span>
+            <div class="result-caption">
+              <span>Original</span>
+              <strong id="targetCode">H180 S80 B90</strong>
+            </div>
+          </div>
+          <button id="compareDivider" class="compare-divider" type="button" aria-label="Compare selected color and original">
+            <span class="compare-label compare-label-left">Your selection</span>
+            <span class="compare-label compare-label-right">Original</span>
+          </button>
+          <div class="compare-code compare-code-left">
+            <strong id="pickedCodeDesktop">H180 S80 B90</strong>
+          </div>
+          <div class="compare-code compare-code-right">
+            <strong id="targetCodeDesktop">H180 S80 B90</strong>
           </div>
         </div>
         <button id="nextButton" class="go-button result-go soundable" type="button" aria-label="Next round">
@@ -252,6 +296,7 @@ app.innerHTML = `
       </section>
 
       <section id="totalScreen" class="screen total-screen" aria-label="Final score">
+        <button id="totalClose" class="total-close soundable" type="button" aria-label="Back to intro">Close</button>
         <h2>total</h2>
         <div class="total-score">
           <span id="totalScore">0.00</span><span>/50</span>
@@ -260,19 +305,10 @@ app.innerHTML = `
         <div id="roundList" class="round-list"></div>
         <form id="scoreForm" class="score-form">
           <label for="playerNameInput">name</label>
-          <input id="playerNameInput" maxlength="24" autocomplete="nickname" />
+          <input id="playerNameInput" maxlength="24" autocomplete="nickname" placeholder="nickname" />
           <button id="saveScoreButton" class="score-submit soundable" type="submit">Save</button>
         </form>
         <p id="scoreSaveStatus" class="score-save-status"></p>
-        <div class="total-actions">
-          <button id="viewScoresButton" class="circle-link soundable" type="button" aria-label="View high scores">
-            ${icons.leaderboard}
-          </button>
-          <button id="replayButton" class="wide-button soundable" type="button">
-            ${icons.restart}
-            Play again
-          </button>
-        </div>
       </section>
 
       <section id="leaderboardScreen" class="screen leaderboard-screen" aria-label="High scores">
@@ -301,20 +337,25 @@ app.innerHTML = `
 const refs = {
   gameCard: getEl<HTMLDivElement>("gameCard"),
   introScreen: getEl<HTMLElement>("introScreen"),
+  categoryScreen: getEl<HTMLElement>("categoryScreen"),
   pickerScreen: getEl<HTMLElement>("pickerScreen"),
   resultScreen: getEl<HTMLElement>("resultScreen"),
   totalScreen: getEl<HTMLElement>("totalScreen"),
+  totalClose: getEl<HTMLButtonElement>("totalClose"),
   leaderboardScreen: getEl<HTMLElement>("leaderboardScreen"),
   startButton: getEl<HTMLButtonElement>("startButton"),
+  difficultyCycle: getEl<HTMLButtonElement>("difficultyCycle"),
+  categoryBack: getEl<HTMLButtonElement>("categoryBack"),
+  categoryList: getEl<HTMLDivElement>("categoryList"),
   leaderboardGhost: getEl<HTMLButtonElement>("leaderboardGhost"),
   muteToggle: getEl<HTMLButtonElement>("muteToggle"),
   themeToggle: getEl<HTMLButtonElement>("themeToggle"),
-  introDifficultyTabs: getEl<HTMLDivElement>("introDifficultyTabs"),
   difficultyPill: getEl<HTMLDivElement>("difficultyPill"),
   pickerBg: getEl<HTMLDivElement>("pickerBg"),
   pickerRound: getEl<HTMLSpanElement>("pickerRound"),
   pickerDifficulty: getEl<HTMLSpanElement>("pickerDifficulty"),
   pickerImage: getEl<HTMLImageElement>("pickerImage"),
+  pickerValueLabel: getEl<HTMLElement>("pickerValueLabel"),
   pickerValues: getEl<HTMLElement>("pickerValues"),
   hStrip: getEl<HTMLDivElement>("hStrip"),
   sStrip: getEl<HTMLDivElement>("sStrip"),
@@ -324,13 +365,22 @@ const refs = {
   bHandle: getEl<HTMLDivElement>("bHandle"),
   submitButton: getEl<HTMLButtonElement>("submitButton"),
   resultClose: getEl<HTMLButtonElement>("resultClose"),
+  resultRound: getEl<HTMLSpanElement>("resultRound"),
   roundScoreMain: getEl<HTMLSpanElement>("roundScoreMain"),
   roundScoreDecimal: getEl<HTMLSpanElement>("roundScoreDecimal"),
   scoreMessage: getEl<HTMLParagraphElement>("scoreMessage"),
   pickedPreview: getEl<HTMLDivElement>("pickedPreview"),
   targetPreview: getEl<HTMLDivElement>("targetPreview"),
+  comparisonGrid: getEl<HTMLDivElement>("comparisonGrid"),
+  comparePicked: getEl<HTMLDivElement>("comparePicked"),
+  compareTarget: getEl<HTMLDivElement>("compareTarget"),
+  compareDivider: getEl<HTMLButtonElement>("compareDivider"),
   pickedImage: getEl<HTMLImageElement>("pickedImage"),
   targetImage: getEl<HTMLImageElement>("targetImage"),
+  pickedCode: getEl<HTMLElement>("pickedCode"),
+  targetCode: getEl<HTMLElement>("targetCode"),
+  pickedCodeDesktop: getEl<HTMLElement>("pickedCodeDesktop"),
+  targetCodeDesktop: getEl<HTMLElement>("targetCodeDesktop"),
   nextButton: getEl<HTMLButtonElement>("nextButton"),
   totalScore: getEl<HTMLSpanElement>("totalScore"),
   totalMessage: getEl<HTMLParagraphElement>("totalMessage"),
@@ -339,8 +389,6 @@ const refs = {
   playerNameInput: getEl<HTMLInputElement>("playerNameInput"),
   saveScoreButton: getEl<HTMLButtonElement>("saveScoreButton"),
   scoreSaveStatus: getEl<HTMLParagraphElement>("scoreSaveStatus"),
-  viewScoresButton: getEl<HTMLButtonElement>("viewScoresButton"),
-  replayButton: getEl<HTMLButtonElement>("replayButton"),
   leaderboardClose: getEl<HTMLButtonElement>("leaderboardClose"),
   leaderboardTabs: getEl<HTMLDivElement>("leaderboardTabs"),
   leaderboardList: getEl<HTMLDivElement>("leaderboardList"),
@@ -350,9 +398,14 @@ const refs = {
 applyTheme();
 updateMuteButton();
 buildHueGradient();
-renderDifficultyTabs();
 updateDifficultyUi();
 bindEvents();
+void refreshCategoryOptions();
+if (debugToolsEnabled) {
+  void import("./debugColorRemover").then(({ initDebugColorRemover }) => {
+    initDebugColorRemover();
+  });
+}
 show("intro");
 
 function bindEvents(): void {
@@ -360,7 +413,15 @@ function bindEvents(): void {
 
   refs.startButton.addEventListener("click", () => {
     sfx.click();
-    void startGame();
+    openCategorySelection();
+  });
+  refs.difficultyCycle.addEventListener("click", () => {
+    cycleDifficulty();
+    sfx.click();
+  });
+  refs.categoryBack.addEventListener("click", () => {
+    sfx.click();
+    show("intro");
   });
   refs.leaderboardGhost.addEventListener("click", () => {
     sfx.click();
@@ -368,13 +429,9 @@ function bindEvents(): void {
   });
   refs.submitButton.addEventListener("click", submitRound);
   refs.nextButton.addEventListener("click", nextRound);
-  refs.replayButton.addEventListener("click", () => {
+  refs.totalClose.addEventListener("click", () => {
     sfx.click();
-    void startGame();
-  });
-  refs.viewScoresButton.addEventListener("click", () => {
-    sfx.click();
-    openLeaderboard(selectedDifficulty, screen);
+    show("intro");
   });
   refs.leaderboardClose.addEventListener("click", () => {
     sfx.click();
@@ -394,6 +451,15 @@ function bindEvents(): void {
   });
   refs.muteToggle.addEventListener("click", toggleMute);
   refs.themeToggle.addEventListener("click", toggleTheme);
+  bindCompareDivider();
+  window.addEventListener("resize", () => {
+    buildHueGradient();
+    updatePickerUi();
+    setComparePosition(50);
+  });
+  window.addEventListener("color-game:prompts-updated", () => {
+    void refreshCategoryOptions();
+  });
   refs.muteToggle.addEventListener("mouseenter", () => sfx.iconHover());
   refs.themeToggle.addEventListener("mouseenter", () => sfx.iconHover());
 
@@ -415,7 +481,14 @@ async function startGame(): Promise<void> {
   refs.startButton.setAttribute("aria-busy", "true");
 
   const prompts = await loadPrompts(selectedDifficulty);
-  queue = shuffle(prompts).slice(0, ROUND_COUNT);
+  const categoryPrompts =
+    selectedCategory === "all"
+      ? prompts
+      : prompts.filter((prompt) => prompt.category === selectedCategory);
+  queue = shuffle(categoryPrompts.length ? categoryPrompts : prompts).slice(
+    0,
+    ROUND_COUNT,
+  );
   roundIndex = 0;
   results = [];
 
@@ -431,6 +504,7 @@ function showPicker(): void {
   refs.pickerDifficulty.textContent = difficultyLabels[selectedDifficulty];
   refs.pickerImage.src = prompt.imageSrc;
   refs.pickerImage.alt = `${prompt.name} transparent color prompt`;
+  refs.pickerValues.parentElement?.classList.remove("active");
   updatePickerUi();
   show("picker");
 }
@@ -445,12 +519,18 @@ function submitRound(): void {
 }
 
 function showResult(prompt: PromptItem, picked: HsbColor, score: number): void {
+  refs.resultRound.textContent = `${roundIndex + 1}/${queue.length}`;
   refs.pickedPreview.style.background = hsbCss(picked);
   refs.targetPreview.style.background = hsbCss(prompt.targetHsb);
   refs.pickedImage.src = prompt.imageSrc;
   refs.targetImage.src = prompt.imageSrc;
   refs.pickedImage.alt = `${prompt.name} with your selected color`;
   refs.targetImage.alt = `${prompt.name} with original color`;
+  refs.pickedCode.textContent = hsbCode(picked);
+  refs.targetCode.textContent = hsbCode(prompt.targetHsb);
+  refs.pickedCodeDesktop.textContent = hsbCode(picked);
+  refs.targetCodeDesktop.textContent = hsbCode(prompt.targetHsb);
+  setComparePosition(50);
   refs.scoreMessage.textContent = scoreMessage(score);
   refs.nextButton.setAttribute(
     "aria-label",
@@ -537,7 +617,7 @@ async function submitFinalScore(): Promise<void> {
 function openLeaderboard(difficulty: Difficulty, returnTo: Screen): void {
   leaderboardDifficulty = difficulty;
   returnFromLeaderboard = returnTo === "leaderboard" ? "intro" : returnTo;
-  renderDifficultyTabs();
+  renderLeaderboardTabs();
   show("leaderboard");
   void refreshLeaderboard();
 }
@@ -580,26 +660,15 @@ function renderLeaderboardEntries(entries: LeaderboardEntry[]): void {
     .join("");
 }
 
-function renderDifficultyTabs(): void {
-  renderTabs(refs.introDifficultyTabs, selectedDifficulty);
+function renderLeaderboardTabs(): void {
   renderTabs(refs.leaderboardTabs, leaderboardDifficulty);
-
-  refs.introDifficultyTabs
-    .querySelectorAll<HTMLButtonElement>("button")
-    .forEach((button) => {
-      button.addEventListener("click", () => {
-        setDifficulty(button.dataset.difficulty as Difficulty);
-        sfx.click();
-      });
-      button.addEventListener("mouseenter", () => sfx.hover());
-    });
 
   refs.leaderboardTabs
     .querySelectorAll<HTMLButtonElement>("button")
     .forEach((button) => {
       button.addEventListener("click", () => {
         leaderboardDifficulty = button.dataset.difficulty as Difficulty;
-        renderDifficultyTabs();
+        renderLeaderboardTabs();
         sfx.click();
         void refreshLeaderboard();
       });
@@ -634,15 +703,65 @@ function setDifficulty(difficulty: Difficulty): void {
 }
 
 function updateDifficultyUi(): void {
-  refs.difficultyPill.textContent = `${difficultyLabels[selectedDifficulty]} - ${ROUND_COUNT} rounds`;
+  refs.difficultyCycle.textContent = difficultyLabels[selectedDifficulty];
+  refs.difficultyPill.textContent = "Choose category";
   refs.gameCard.dataset.difficulty = selectedDifficulty;
-  renderDifficultyTabs();
+}
+
+async function refreshCategoryOptions(): Promise<void> {
+  availableCategories = await loadCategories();
+  const values = ["all", ...availableCategories];
+  if (!values.includes(selectedCategory)) selectedCategory = "all";
+  if (screen === "category") renderCategoryChoices();
+}
+
+function openCategorySelection(): void {
+  renderCategoryChoices();
+  show("category");
+}
+
+function renderCategoryChoices(): void {
+  const values = ["all", ...availableCategories];
+  refs.categoryList.innerHTML = values
+    .map(
+      (category) => `
+        <button
+          class="category-choice soundable ${
+            category === selectedCategory ? "active" : ""
+          }"
+          type="button"
+          data-category="${escapeHtml(category)}"
+        >
+          <span>${category === "all" ? "All categories" : escapeHtml(category)}</span>
+          <em>${difficultyLabels[selectedDifficulty]}</em>
+        </button>
+      `
+    )
+    .join("");
+  refs.categoryList
+    .querySelectorAll<HTMLButtonElement>("[data-category]")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedCategory = button.dataset.category || "all";
+        localStorage.setItem(STORAGE_CATEGORY, selectedCategory);
+        sfx.click();
+        void startGame();
+      });
+      button.addEventListener("mouseenter", () => sfx.hover());
+    });
+}
+
+function cycleDifficulty(): void {
+  const currentIndex = difficulties.indexOf(selectedDifficulty);
+  const next = difficulties[(currentIndex + 1) % difficulties.length];
+  setDifficulty(next);
 }
 
 function show(nextScreen: Screen): void {
   screen = nextScreen;
   const map: Record<Screen, HTMLElement> = {
     intro: refs.introScreen,
+    category: refs.categoryScreen,
     picker: refs.pickerScreen,
     result: refs.resultScreen,
     total: refs.totalScreen,
@@ -663,7 +782,6 @@ function updatePickerUi(): void {
   const selectedRgb = hsbToRgb(...pickerHsb);
   const selectedCss = rgbCss(selectedRgb);
   refs.pickerBg.style.background = selectedCss;
-  refs.pickerValues.textContent = pickerValueText();
   refs.pickerValues.style.color = readableTextColor(selectedRgb);
   refs.pickerValues.previousElementSibling?.setAttribute(
     "style",
@@ -691,10 +809,48 @@ function bindStrip(strip: HTMLDivElement, channel: "h" | "s" | "b"): void {
   });
   strip.addEventListener("pointerup", (event) => {
     if (activePointer === event.pointerId) activePointer = null;
+    hidePickerChannelSoon();
   });
   strip.addEventListener("pointercancel", (event) => {
     if (activePointer === event.pointerId) activePointer = null;
+    hidePickerChannelSoon();
   });
+}
+
+function bindCompareDivider(): void {
+  refs.comparisonGrid.addEventListener("pointerdown", (event) => {
+    if (window.matchMedia("(max-width: 720px)").matches) return;
+    compareDragState = {
+      pointerId: event.pointerId,
+      rect: refs.comparisonGrid.getBoundingClientRect(),
+    };
+    refs.comparisonGrid.setPointerCapture(event.pointerId);
+    updateCompareFromPointer(event.clientX);
+  });
+  refs.comparisonGrid.addEventListener("pointermove", (event) => {
+    if (!compareDragState || compareDragState.pointerId !== event.pointerId) {
+      return;
+    }
+    updateCompareFromPointer(event.clientX);
+  });
+  refs.comparisonGrid.addEventListener("pointerup", (event) => {
+    if (compareDragState?.pointerId === event.pointerId) compareDragState = null;
+  });
+  refs.comparisonGrid.addEventListener("pointercancel", (event) => {
+    if (compareDragState?.pointerId === event.pointerId) compareDragState = null;
+  });
+}
+
+function updateCompareFromPointer(clientX: number): void {
+  if (!compareDragState) return;
+  const percent =
+    ((clientX - compareDragState.rect.left) / compareDragState.rect.width) * 100;
+  setComparePosition(percent);
+}
+
+function setComparePosition(value: number): void {
+  const percent = Math.min(100, Math.max(0, value));
+  refs.resultScreen.style.setProperty("--compare-x", `${percent}%`);
 }
 
 function updateFromStrip(
@@ -703,15 +859,19 @@ function updateFromStrip(
   channel: "h" | "s" | "b",
 ): void {
   const rect = strip.getBoundingClientRect();
-  const y = Math.min(rect.height, Math.max(0, event.clientY - rect.top));
-  const position = y / rect.height;
+  const pointerPosition = Math.min(
+    rect.height,
+    Math.max(0, event.clientY - rect.top),
+  );
+  const position = pointerPosition / rect.height;
 
   if (channel === "h") pickerHsb[0] = Math.round(position * 360) % 360;
-  if (channel === "s") pickerHsb[1] = Math.round(100 - position * 100);
-  if (channel === "b") pickerHsb[2] = Math.round(100 - position * 100);
+  if (channel === "s") pickerHsb[1] = Math.round((1 - position) * 100);
+  if (channel === "b") pickerHsb[2] = Math.round((1 - position) * 100);
 
   sfx.slider();
   updatePickerUi();
+  showPickerChannel(channel);
 }
 
 function updateStripGradients(): void {
@@ -743,20 +903,26 @@ function setHandlePosition(
   inverted: boolean,
 ): void {
   const percent = inverted ? 100 - (value / max) * 100 : (value / max) * 100;
-  handle.style.top = `${Math.min(100, Math.max(0, percent))}%`;
+  const clamped = Math.min(100, Math.max(0, percent));
+  handle.style.left = "50%";
+  handle.style.top = `${clamped}%`;
 }
 
 function animateRoundScore(score: number): void {
-  const duration = 560;
+  const duration = 1450;
   const start = performance.now();
+  let lastToneAt = 0;
 
   const frame = (now: number) => {
     const t = Math.min(1, (now - start) / duration);
-    const eased = 1 - Math.pow(1 - t, 3);
+    const eased = 1 - Math.pow(1 - t, 2.2);
     const value = score * eased;
     setRoundScore(value);
+    if (now - lastToneAt > 86 && t < 0.98) {
+      lastToneAt = now;
+      sfx.scoreRise(eased);
+    }
     if (t < 1) {
-      if (Math.random() > 0.75) sfx.scoreTick();
       requestAnimationFrame(frame);
     } else {
       setRoundScore(score);
@@ -854,6 +1020,29 @@ function pickerValueText(): string {
 
   if (selectedDifficulty === "hard") return "adjust by sight";
   return "no readout";
+}
+
+function showPickerChannel(channel: "h" | "s" | "b"): void {
+  if (pickerValueHideTimer) window.clearTimeout(pickerValueHideTimer);
+  const channelLabels = {
+    h: "HUE",
+    s: "SATURATION",
+    b: "BRIGHTNESS",
+  };
+  refs.pickerValueLabel.textContent = channelLabels[channel];
+  refs.pickerValues.textContent = "";
+  refs.pickerValues.parentElement?.classList.add("active");
+}
+
+function hidePickerChannelSoon(): void {
+  if (pickerValueHideTimer) window.clearTimeout(pickerValueHideTimer);
+  pickerValueHideTimer = window.setTimeout(() => {
+    refs.pickerValues.parentElement?.classList.remove("active");
+  }, 900);
+}
+
+function hsbCode(hsb: HsbColor): string {
+  return `H${hsb[0]} S${hsb[1]} B${hsb[2]}`;
 }
 
 function hueDistance(a: number, b: number): number {
