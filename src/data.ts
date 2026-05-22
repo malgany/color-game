@@ -50,7 +50,7 @@ export type LeaderboardEntry = {
 };
 
 const LOCAL_SCORES_KEY = "color_game_local_scores";
-const GENERATED_PROMPTS_SRC = "/assets/prompts/generated/prompts.json";
+const GENERATED_PROMPTS_SRC = `${import.meta.env.BASE_URL}assets/prompts/generated/prompts.json`;
 
 export { difficultyLabels };
 export type { Difficulty, PromptItem };
@@ -74,7 +74,7 @@ export async function loadPrompts(
       remotePrompts = (data as PromptRow[]).map((row) => ({
         id: row.slug,
         name: row.name,
-        imageSrc: row.image_src,
+        imageSrc: withBaseAsset(row.image_src),
         category: row.category || undefined,
         targetHsb: [row.target_h, row.target_s, row.target_b],
         difficulty: row.difficulty,
@@ -86,7 +86,11 @@ export async function loadPrompts(
   if (remotePrompts.length) return [...remotePrompts, ...generatedPrompts];
 
   return [
-    ...promptCatalog.map((prompt) => ({ ...prompt, difficulty })),
+    ...promptCatalog.map((prompt) => ({
+      ...prompt,
+      imageSrc: withBaseAsset(prompt.imageSrc),
+      difficulty,
+    })),
     ...generatedPrompts,
   ];
 }
@@ -180,7 +184,10 @@ async function loadGeneratedPrompts(
       .map((prompt) => ({
         id: prompt.slug,
         name: prompt.name,
-        imageSrc: withGeneratedVersion(prompt.imageSrc, prompt.createdAt),
+        imageSrc: withGeneratedVersion(
+          withBaseAsset(prompt.imageSrc),
+          prompt.createdAt,
+        ),
         category: prompt.category,
         targetHsb: prompt.targetHsb,
         difficulty: prompt.difficulty,
@@ -229,6 +236,11 @@ function withGeneratedVersion(imageSrc: string, createdAt?: string): string {
   if (!createdAt) return imageSrc;
   const separator = imageSrc.includes("?") ? "&" : "?";
   return `${imageSrc}${separator}v=${encodeURIComponent(createdAt)}`;
+}
+
+function withBaseAsset(imageSrc: string): string {
+  if (!imageSrc.startsWith("/assets/")) return imageSrc;
+  return `${import.meta.env.BASE_URL}${imageSrc.slice(1)}`;
 }
 
 function readLocalScores(): LeaderboardEntry[] {
