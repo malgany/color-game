@@ -29,6 +29,7 @@ create table if not exists public.color_scores (
   player_name text not null check (char_length(trim(player_name)) between 1 and 24),
   total_score numeric(5,2) not null check (total_score between 0 and 50),
   difficulty public.color_difficulty not null default 'easy',
+  category text not null default 'All categories' check (char_length(trim(category)) between 1 and 40),
   rounds jsonb not null check (jsonb_typeof(rounds) = 'array'),
   created_at timestamptz not null default now()
 );
@@ -63,11 +64,24 @@ create index if not exists color_prompts_difficulty_active_sort_idx
 alter table public.color_prompts
   add column if not exists category text not null default 'general';
 
+alter table public.color_scores
+  add column if not exists category text not null default 'All categories';
+
+alter table public.color_scores
+  drop constraint if exists color_scores_category_check;
+
+alter table public.color_scores
+  add constraint color_scores_category_check
+  check (char_length(trim(category)) between 1 and 40);
+
 create index if not exists color_prompts_category_idx
   on public.color_prompts (category);
 
 create index if not exists color_scores_difficulty_score_idx
   on public.color_scores (difficulty, total_score desc, created_at asc);
+
+create index if not exists color_scores_category_score_idx
+  on public.color_scores (category, total_score desc, created_at asc);
 
 create index if not exists color_challenges_created_idx
   on public.color_challenges (created_at desc);
@@ -106,6 +120,7 @@ create policy "Players can submit color scores"
   with check (
     char_length(trim(player_name)) between 1 and 24
     and total_score between 0 and 50
+    and char_length(trim(category)) between 1 and 40
     and jsonb_typeof(rounds) = 'array'
     and jsonb_array_length(rounds) between 1 and 5
   );
@@ -143,7 +158,14 @@ create policy "Players can submit color challenge scores"
 
 delete from public.color_prompts
 where category = 'general'
-  and slug in ('lemon-star', 'cherry-cap', 'cyan-door', 'lime-leaf', 'ocean-drop');
+  and slug in (
+    'lemon-star',
+    'cherry-cap',
+    'cyan-door',
+    'lime-leaf',
+    'ocean-drop',
+    'violet-bolt'
+  );
 
 grant usage on schema public to anon, authenticated;
 grant select on public.color_prompts to anon, authenticated;

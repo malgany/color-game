@@ -94,14 +94,6 @@ export function initDebugColorRemover(): void {
             <label for="debugPromptSlug">Slug</label>
             <input id="debugPromptSlug" type="text" maxlength="64" placeholder="hulk-verde" />
 
-            <label for="debugPromptDifficulty">Dificuldade</label>
-            <select id="debugPromptDifficulty">
-              <option value="all">Todas</option>
-              <option value="easy">Easy</option>
-              <option value="hard">Hard</option>
-              <option value="brutal">Brutal</option>
-            </select>
-
             <label for="debugPromptCategory">Categoria</label>
             <select id="debugPromptCategory"></select>
             <input id="debugNewCategory" type="text" maxlength="40" placeholder="Nova categoria" />
@@ -162,7 +154,6 @@ export function initDebugColorRemover(): void {
   const saveForm = getDebugEl<HTMLFormElement>("debugSaveForm");
   const promptNameInput = getDebugEl<HTMLInputElement>("debugPromptName");
   const promptSlugInput = getDebugEl<HTMLInputElement>("debugPromptSlug");
-  const promptDifficultyInput = getDebugEl<HTMLSelectElement>("debugPromptDifficulty");
   const promptCategoryInput = getDebugEl<HTMLSelectElement>("debugPromptCategory");
   const newCategoryInput = getDebugEl<HTMLInputElement>("debugNewCategory");
   const targetHsbText = getDebugEl<HTMLElement>("debugTargetHsb");
@@ -403,7 +394,7 @@ export function initDebugColorRemover(): void {
         body: JSON.stringify({
           name: promptNameInput.value,
           slug: promptSlugInput.value,
-          difficulty: promptDifficultyInput.value as Difficulty | "all",
+          difficulty: "all",
           category,
           targetHsb,
           imageDataUrl: renderGameImage(canvas),
@@ -616,7 +607,6 @@ export function initDebugColorRemover(): void {
                 <div class="debug-prompt-meta">
                   <strong>${escapeHtml(prompt.name)}</strong>
                   <span>${escapeHtml(prompt.slug)}</span>
-                  <em>${escapeHtml(prompt.difficulties.join(", "))}</em>
                 </div>
                 <button type="button" data-delete-slug="${escapeHtml(
                   prompt.slug,

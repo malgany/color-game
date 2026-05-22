@@ -369,29 +369,8 @@ svg {
   transition: opacity 0.24s ease, inset 0.24s ease;
 }
 
-.round-pill {
-  height: 64px;
-  display: flex;
-  align-items: center;
-  color: #fff;
-  font-size: 14px;
-  letter-spacing: -0.28px;
-}
-
-.difficulty-cycle {
-  width: 58px;
-  height: 38px;
-  border-radius: 999px;
-  background: #fff;
-  color: #000;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0;
-}
-
 .intro-text-button {
-  height: 38px;
+  height: 42px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
@@ -443,7 +422,7 @@ svg {
   min-height: 52px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 999px;
@@ -1563,17 +1542,6 @@ body:not([data-screen="intro"]) .footer-links {
     align-items: center;
     bottom: max(92px, calc(92px + env(safe-area-inset-bottom)));
     gap: 12px;
-  }
-
-  .round-pill {
-    font-size: 15px;
-    color: rgba(255, 255, 255, 0.72);
-  }
-
-  .difficulty-cycle {
-    width: 62px;
-    height: 34px;
-    font-size: 13px;
   }
 
   .intro-text-button {

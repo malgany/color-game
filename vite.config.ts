@@ -166,7 +166,7 @@ function validateBody(body: SavePromptBody): Required<SavePromptBody> {
   const name = body.name?.trim();
   const slug = body.slug?.trim();
   const category = body.category?.trim();
-  const difficulty = body.difficulty;
+  const difficulty = body.difficulty || "all";
   const targetHsb = body.targetHsb;
 
   if (!name) throw new Error("Name is required");

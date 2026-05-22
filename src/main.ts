@@ -1,7 +1,5 @@
-import { difficulties } from "./catalog";
 import {
   createChallenge,
-  difficultyLabels,
   loadChallenge,
   loadChallengeScores,
   loadCategories,
@@ -63,9 +61,10 @@ type CompareDragState = {
 const ROUND_COUNT = 5;
 const STORAGE_THEME = "color_game_theme";
 const STORAGE_MUTED = "color_game_muted";
-const STORAGE_DIFFICULTY = "color_game_difficulty";
 const STORAGE_CATEGORY = "color_game_category";
 const STORAGE_PLAYER_NAME = "color_game_player_name";
+const DEFAULT_DIFFICULTY: Difficulty = "easy";
+const ALL_CATEGORY_LABEL = "All categories";
 const COUNTDOWN_STEPS = ["Ready", "Set", "Go"];
 
 const icons = {
@@ -101,9 +100,9 @@ let muted = localStorage.getItem(STORAGE_MUTED) === "1";
 let activeChallenge: SharedChallenge | null = null;
 let pendingChallengeCode = readChallengeCode();
 let challengeScores: ChallengeScoreEntry[] = [];
-let selectedDifficulty = readDifficulty();
+let selectedDifficulty: Difficulty = DEFAULT_DIFFICULTY;
 let selectedCategory = localStorage.getItem(STORAGE_CATEGORY) || "all";
-let leaderboardDifficulty: Difficulty = selectedDifficulty;
+let leaderboardCategory = ALL_CATEGORY_LABEL;
 let pickerValueHideTimer: number | undefined;
 let availableCategories: string[] = [];
 let compareDragState: CompareDragState = null;
@@ -252,8 +251,7 @@ app.innerHTML = `
           <button id="startButton" class="mode-button soundable" type="button" aria-label="Start game">
             ${icons.target}
           </button>
-          <button id="difficultyCycle" class="difficulty-cycle soundable" type="button" aria-label="Change difficulty">Easy</button>
-          <div id="difficultyPill" class="round-pill" aria-label="Selected difficulty">Choose category</div>
+          <button id="categoryButton" class="intro-text-button soundable" type="button">Categories</button>
           <button id="multiplayerButton" class="intro-text-button soundable" type="button">Multiplayer</button>
         </div>
       </section>
@@ -281,7 +279,7 @@ app.innerHTML = `
         <div id="pickerBg" class="picker-bg"></div>
         <div class="picker-meta">
           <span id="pickerRound">1/5</span>
-          <span id="pickerDifficulty">Easy</span>
+          <span id="pickerDifficulty"></span>
         </div>
         <div class="strip-container" aria-label="Color controls">
           <div id="hStrip" class="strip" data-channel="h" aria-label="Hue control">
@@ -373,7 +371,7 @@ app.innerHTML = `
       <section id="leaderboardScreen" class="screen leaderboard-screen" aria-label="High scores">
         <button id="leaderboardClose" class="mini-close soundable" type="button" aria-label="Close high scores">Close</button>
         <h2>high scores</h2>
-        <div id="leaderboardTabs" class="difficulty-tabs leaderboard-tabs" role="tablist" aria-label="Leaderboard difficulty"></div>
+        <div id="leaderboardTabs" class="difficulty-tabs leaderboard-tabs" role="tablist" aria-label="Leaderboard category"></div>
         <div id="leaderboardList" class="leaderboard-list" aria-live="polite"></div>
         <button id="leaderboardRefresh" class="mini-action soundable" type="button">Refresh</button>
       </section>
@@ -410,7 +408,7 @@ const refs = {
   challengeBoard: getEl<HTMLDivElement>("challengeBoard"),
   leaderboardScreen: getEl<HTMLElement>("leaderboardScreen"),
   startButton: getEl<HTMLButtonElement>("startButton"),
-  difficultyCycle: getEl<HTMLButtonElement>("difficultyCycle"),
+  categoryButton: getEl<HTMLButtonElement>("categoryButton"),
   multiplayerButton: getEl<HTMLButtonElement>("multiplayerButton"),
   challengeIntroBoard: getEl<HTMLDivElement>("challengeIntroBoard"),
   countdownOverlay: getEl<HTMLDivElement>("countdownOverlay"),
@@ -426,7 +424,6 @@ const refs = {
   leaderboardGhost: getEl<HTMLButtonElement>("leaderboardGhost"),
   muteToggle: getEl<HTMLButtonElement>("muteToggle"),
   themeToggle: getEl<HTMLButtonElement>("themeToggle"),
-  difficultyPill: getEl<HTMLDivElement>("difficultyPill"),
   pickerBg: getEl<HTMLDivElement>("pickerBg"),
   pickerRound: getEl<HTMLSpanElement>("pickerRound"),
   pickerDifficulty: getEl<HTMLSpanElement>("pickerDifficulty"),
@@ -474,7 +471,7 @@ const refs = {
 applyTheme();
 updateMuteButton();
 buildHueGradient();
-updateDifficultyUi();
+updateRunUi();
 bindEvents();
 void refreshCategoryOptions();
 applyChallengeIntro();
@@ -494,9 +491,16 @@ function bindEvents(): void {
     if (activeChallenge) void startGame();
     else openCategorySelection();
   });
-  refs.difficultyCycle.addEventListener("click", () => {
-    cycleDifficulty();
+  refs.categoryButton.addEventListener("click", () => {
     sfx.click();
+    if (activeChallenge) void startGame();
+    else openCategorySelection();
+  });
+  refs.categoryButton.addEventListener("mouseenter", () => {
+    sfx.hover();
+  });
+  refs.multiplayerButton.addEventListener("mouseenter", () => {
+    sfx.hover();
   });
   refs.categoryBack.addEventListener("click", () => {
     sfx.click();
@@ -525,7 +529,7 @@ function bindEvents(): void {
   });
   refs.leaderboardGhost.addEventListener("click", () => {
     sfx.click();
-    openLeaderboard(selectedDifficulty, screen);
+    openLeaderboard(scoreCategoryLabel(), screen);
   });
   refs.submitButton.addEventListener("click", submitRound);
   refs.nextButton.addEventListener("click", () => {
@@ -586,9 +590,8 @@ async function startGame(): Promise<void> {
   refs.startButton.setAttribute("aria-busy", "true");
 
   if (activeChallenge) {
-    selectedDifficulty = activeChallenge.difficulty;
-    leaderboardDifficulty = selectedDifficulty;
-    updateDifficultyUi();
+    selectedDifficulty = DEFAULT_DIFFICULTY;
+    updateRunUi();
     queue = activeChallenge.prompts.slice(0, ROUND_COUNT);
   } else {
     queue = await buildRoundQueue();
@@ -602,7 +605,7 @@ async function startGame(): Promise<void> {
 }
 
 async function buildRoundQueue(): Promise<PromptItem[]> {
-  const prompts = await loadPrompts(selectedDifficulty);
+  const prompts = await loadPrompts(DEFAULT_DIFFICULTY);
   const categoryPrompts =
     selectedCategory === "all"
       ? prompts
@@ -651,10 +654,10 @@ async function runCountdown(): Promise<void> {
 
 function showPicker(): void {
   const prompt = currentPrompt();
-  pickerHsb = randomPickerDefault(prompt.targetHsb[0], selectedDifficulty);
+  pickerHsb = randomPickerDefault(prompt.targetHsb[0]);
   pickerHasSelection = false;
   refs.pickerRound.textContent = `${roundIndex + 1}/${queue.length}`;
-  refs.pickerDifficulty.textContent = difficultyLabels[selectedDifficulty];
+  refs.pickerDifficulty.textContent = activeChallenge ? "Challenge" : scoreCategoryLabel();
   refs.pickerImage.src = prompt.imageSrc;
   refs.pickerImage.alt = `${prompt.name} transparent color prompt`;
   refs.pickerValueLabel.textContent = "";
@@ -722,7 +725,7 @@ function showTotal(): void {
   refs.totalScore.textContent = total.toFixed(2);
   refs.totalMessage.textContent = activeChallenge
     ? challengeSummaryMessage(total, activeChallenge)
-    : `${difficultyLabels[selectedDifficulty]} - ${totalMessage(total)}`;
+    : `${scoreCategoryLabel()} - ${totalMessage(total)}`;
   refs.totalPalette.innerHTML = results
     .map(
       (result) => {
@@ -805,7 +808,8 @@ async function submitFinalScore(): Promise<void> {
       : await saveScore({
         playerName,
         totalScore: total,
-        difficulty: selectedDifficulty,
+        difficulty: DEFAULT_DIFFICULTY,
+        category: scoreCategoryLabel(),
         rounds,
       });
     baseScorePosted = true;
@@ -892,7 +896,7 @@ async function shareScoreChallenge(
   const challenge = await createChallenge({
     creatorName: playerName,
     creatorScore: total,
-    difficulty: selectedDifficulty,
+    difficulty: DEFAULT_DIFFICULTY,
     prompts: results.map((result) => result.prompt),
     rounds: currentScoreRounds(),
   });
@@ -973,8 +977,8 @@ async function shareChallengeLink(
   return { status: "ready", url };
 }
 
-function openLeaderboard(difficulty: Difficulty, returnTo: Screen): void {
-  leaderboardDifficulty = difficulty;
+function openLeaderboard(category: string, returnTo: Screen): void {
+  leaderboardCategory = category;
   returnFromLeaderboard = returnTo === "leaderboard" ? "intro" : returnTo;
   renderLeaderboardTabs();
   show("leaderboard");
@@ -982,13 +986,13 @@ function openLeaderboard(difficulty: Difficulty, returnTo: Screen): void {
 }
 
 async function refreshLeaderboard(): Promise<void> {
-  const difficulty = leaderboardDifficulty;
+  const category = leaderboardCategory;
   refs.leaderboardRefresh.disabled = true;
-  refs.leaderboardList.innerHTML = `<div class="leaderboard-empty">Loading ${difficultyLabels[difficulty]} scores...</div>`;
+  refs.leaderboardList.innerHTML = `<div class="leaderboard-empty">Loading ${escapeHtml(category)} scores...</div>`;
 
   try {
-    const entries = await loadLeaderboard(difficulty);
-    if (difficulty !== leaderboardDifficulty) return;
+    const entries = await loadLeaderboard(category);
+    if (category !== leaderboardCategory) return;
     renderLeaderboardEntries(entries);
   } catch {
     refs.leaderboardList.innerHTML =
@@ -1020,13 +1024,13 @@ function renderLeaderboardEntries(entries: LeaderboardEntry[]): void {
 }
 
 function renderLeaderboardTabs(): void {
-  renderTabs(refs.leaderboardTabs, leaderboardDifficulty);
+  renderCategoryTabs(refs.leaderboardTabs, leaderboardCategory);
 
   refs.leaderboardTabs
     .querySelectorAll<HTMLButtonElement>("button")
     .forEach((button) => {
       button.addEventListener("click", () => {
-        leaderboardDifficulty = button.dataset.difficulty as Difficulty;
+        leaderboardCategory = button.dataset.category || ALL_CATEGORY_LABEL;
         renderLeaderboardTabs();
         sfx.click();
         void refreshLeaderboard();
@@ -1035,38 +1039,41 @@ function renderLeaderboardTabs(): void {
     });
 }
 
-function renderTabs(container: HTMLElement, active: Difficulty): void {
-  container.innerHTML = difficulties
+function renderCategoryTabs(container: HTMLElement, active: string): void {
+  container.innerHTML = scoreCategories()
     .map(
-      (difficulty) => `
+      (category) => `
         <button
-          class="difficulty-tab ${difficulty === active ? "active" : ""}"
+          class="difficulty-tab ${category === active ? "active" : ""}"
           type="button"
           role="tab"
-          aria-selected="${difficulty === active}"
-          data-difficulty="${difficulty}"
+          aria-selected="${category === active}"
+          data-category="${escapeHtml(category)}"
         >
-          ${difficultyLabels[difficulty]}
+          ${escapeHtml(category)}
         </button>
       `,
     )
     .join("");
 }
 
-function setDifficulty(difficulty: Difficulty): void {
-  if (!difficulties.includes(difficulty)) return;
-  selectedDifficulty = difficulty;
-  leaderboardDifficulty = difficulty;
-  localStorage.setItem(STORAGE_DIFFICULTY, difficulty);
-  updateDifficultyUi();
+function updateRunUi(): void {
+  refs.categoryButton.textContent = activeChallenge ? "Challenge run" : categoryButtonLabel();
+  refs.gameCard.dataset.difficulty = selectedDifficulty;
+  refs.categoryButton.disabled = Boolean(activeChallenge);
+  refs.multiplayerButton.disabled = Boolean(activeChallenge);
 }
 
-function updateDifficultyUi(): void {
-  refs.difficultyCycle.textContent = difficultyLabels[selectedDifficulty];
-  refs.difficultyPill.textContent = activeChallenge ? "Challenge run" : "Choose category";
-  refs.gameCard.dataset.difficulty = selectedDifficulty;
-  refs.difficultyCycle.disabled = Boolean(activeChallenge);
-  refs.multiplayerButton.disabled = Boolean(activeChallenge);
+function categoryButtonLabel(): string {
+  return selectedCategory === "all" ? "Categories" : scoreCategoryLabel();
+}
+
+function scoreCategoryLabel(): string {
+  return selectedCategory === "all" ? ALL_CATEGORY_LABEL : selectedCategory;
+}
+
+function scoreCategories(): string[] {
+  return [ALL_CATEGORY_LABEL, ...availableCategories];
 }
 
 function applyChallengeIntro(): void {
@@ -1123,10 +1130,9 @@ async function loadPendingChallenge(): Promise<void> {
 
     activeChallenge = challengeEntryToShared(challenge);
     pendingChallengeCode = null;
-    selectedDifficulty = challenge.difficulty;
-    leaderboardDifficulty = challenge.difficulty;
+    selectedDifficulty = DEFAULT_DIFFICULTY;
     await refreshChallengeScores(challenge.code);
-    updateDifficultyUi();
+    updateRunUi();
     applyChallengeIntro();
   } finally {
     refs.startButton.disabled = false;
@@ -1163,7 +1169,12 @@ async function refreshCategoryOptions(): Promise<void> {
   availableCategories = await loadCategories();
   const values = ["all", ...availableCategories];
   if (!values.includes(selectedCategory)) selectedCategory = "all";
+  leaderboardCategory = scoreCategories().includes(leaderboardCategory)
+    ? leaderboardCategory
+    : scoreCategoryLabel();
+  updateRunUi();
   if (screen === "category") renderCategoryChoices();
+  if (screen === "leaderboard") renderLeaderboardTabs();
 }
 
 function openCategorySelection(): void {
@@ -1204,7 +1215,7 @@ async function submitMultiplayerSetup(): Promise<void> {
     const prompts = await buildRoundQueue();
     const challenge = await createChallenge({
       creatorName,
-      difficulty: selectedDifficulty,
+      difficulty: DEFAULT_DIFFICULTY,
       prompts,
     });
     if (!challenge) throw new Error("challenge create failed");
@@ -1212,9 +1223,9 @@ async function submitMultiplayerSetup(): Promise<void> {
     activeChallenge = challengeEntryToShared(challenge);
     challengeScores = [];
     localStorage.setItem(STORAGE_PLAYER_NAME, creatorName);
-    leaderboardDifficulty = selectedDifficulty;
+    leaderboardCategory = scoreCategoryLabel();
     lastChallengeShareUrl = buildChallengeUrl(challenge.code).toString();
-    updateDifficultyUi();
+    updateRunUi();
     applyChallengeIntro();
 
     const shared = await shareChallengeLink(
@@ -1252,7 +1263,6 @@ function renderCategoryChoices(): void {
           data-category="${escapeHtml(category)}"
         >
           <span>${category === "all" ? "All categories" : escapeHtml(category)}</span>
-          <em>${difficultyLabels[selectedDifficulty]}</em>
         </button>
       `
     )
@@ -1263,17 +1273,13 @@ function renderCategoryChoices(): void {
       button.addEventListener("click", () => {
         selectedCategory = button.dataset.category || "all";
         localStorage.setItem(STORAGE_CATEGORY, selectedCategory);
+        leaderboardCategory = scoreCategoryLabel();
+        updateRunUi();
         sfx.click();
         void startGame();
       });
       button.addEventListener("mouseenter", () => sfx.hover());
     });
-}
-
-function cycleDifficulty(): void {
-  const currentIndex = difficulties.indexOf(selectedDifficulty);
-  const next = difficulties[(currentIndex + 1) % difficulties.length];
-  setDifficulty(next);
 }
 
 function show(nextScreen: Screen): void {
@@ -1503,23 +1509,14 @@ function readTheme(): "light" | "dark" {
   return "light";
 }
 
-function readDifficulty(): Difficulty {
-  const stored = localStorage.getItem(STORAGE_DIFFICULTY);
-  if (stored === "hard" || stored === "brutal") return stored;
-  return "easy";
-}
-
 function currentPrompt(): PromptItem {
   const prompt = queue[roundIndex];
   if (!prompt) throw new Error("No prompt available for the current round");
   return prompt;
 }
 
-function randomPickerDefault(
-  targetHue: number,
-  difficulty: Difficulty,
-): HsbColor {
-  const minHueGap = difficulty === "easy" ? 45 : difficulty === "hard" ? 90 : 130;
+function randomPickerDefault(targetHue: number): HsbColor {
+  const minHueGap = 45;
   let hue = Math.floor(Math.random() * 360);
   let guard = 0;
   while (hueDistance(hue, targetHue) < minHueGap && guard < 100) {
@@ -1527,8 +1524,8 @@ function randomPickerDefault(
     guard += 1;
   }
 
-  const saturationFloor = difficulty === "easy" ? 35 : 20;
-  const brightnessFloor = difficulty === "brutal" ? 28 : 40;
+  const saturationFloor = 35;
+  const brightnessFloor = 40;
   return [
     hue,
     saturationFloor + Math.floor(Math.random() * (92 - saturationFloor)),
@@ -1537,21 +1534,11 @@ function randomPickerDefault(
 }
 
 function pickerValueText(): string {
-  if (selectedDifficulty === "easy") {
-    return `H${pickerHsb[0]} S${pickerHsb[1]} B${pickerHsb[2]}`;
-  }
-
-  return "";
+  return `H${pickerHsb[0]} S${pickerHsb[1]} B${pickerHsb[2]}`;
 }
 
 function showPickerChannel(channel: "h" | "s" | "b"): void {
   if (pickerValueHideTimer) window.clearTimeout(pickerValueHideTimer);
-  if (selectedDifficulty === "brutal") {
-    refs.pickerValueLabel.textContent = "";
-    refs.pickerValues.textContent = "";
-    refs.pickerValues.parentElement?.classList.remove("active");
-    return;
-  }
 
   const channelLabels = {
     h: "HUE",
@@ -1760,14 +1747,14 @@ function challengeSummaryMessage(
   challenge: SharedChallenge,
 ): string {
   if (challenge.score === null) {
-    return `${difficultyLabels[selectedDifficulty]} challenge - post your result.`;
+    return "Challenge - post your result.";
   }
   const diff = total - challenge.score;
-  if (Math.abs(diff) < 0.005) return `${difficultyLabels[selectedDifficulty]} challenge - tied.`;
+  if (Math.abs(diff) < 0.005) return "Challenge - tied.";
   if (diff > 0) {
-    return `${difficultyLabels[selectedDifficulty]} challenge - you won by ${diff.toFixed(2)}.`;
+    return `Challenge - you won by ${diff.toFixed(2)}.`;
   }
-  return `${difficultyLabels[selectedDifficulty]} challenge - ${Math.abs(diff).toFixed(
+  return `Challenge - ${Math.abs(diff).toFixed(
     2,
   )} behind.`;
 }

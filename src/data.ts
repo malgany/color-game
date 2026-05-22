@@ -1,5 +1,4 @@
 import {
-  difficultyLabels,
   type Difficulty,
   type PromptItem,
 } from "./catalog";
@@ -22,6 +21,7 @@ type ScoreRow = {
   player_name: string;
   total_score: number | string;
   difficulty: Difficulty;
+  category?: string | null;
   created_at: string;
 };
 
@@ -53,6 +53,7 @@ export type ScoreSubmission = {
   playerName: string;
   totalScore: number;
   difficulty: Difficulty;
+  category: string;
   rounds: ScoreRound[];
 };
 
@@ -61,6 +62,7 @@ export type LeaderboardEntry = {
   playerName: string;
   totalScore: number;
   difficulty: Difficulty;
+  category: string;
   createdAt: string;
 };
 
@@ -98,7 +100,6 @@ export type ChallengeScoreEntry = {
 const LOCAL_SCORES_KEY = "color_game_local_scores";
 const GENERATED_PROMPTS_SRC = `${import.meta.env.BASE_URL}assets/prompts/generated/prompts.json`;
 
-export { difficultyLabels };
 export type { Difficulty, PromptItem };
 
 export async function loadPrompts(
@@ -117,14 +118,16 @@ export async function loadPrompts(
       .order("sort_order", { ascending: true });
 
     if (!error && data?.length) {
-      remotePrompts = (data as PromptRow[]).map((row) => ({
-        id: row.slug,
-        name: row.name,
-        imageSrc: withBaseAsset(row.image_src),
-        category: row.category || undefined,
-        targetHsb: [row.target_h, row.target_s, row.target_b],
-        difficulty: row.difficulty,
-      }));
+      remotePrompts = (data as PromptRow[])
+        .map((row): PromptItem => ({
+          id: row.slug,
+          name: row.name,
+          imageSrc: withBaseAsset(row.image_src),
+          category: row.category || undefined,
+          targetHsb: [row.target_h, row.target_s, row.target_b],
+          difficulty: row.difficulty,
+        }))
+        .filter((prompt) => prompt.category !== "general");
     }
   }
 
@@ -135,12 +138,26 @@ export async function loadPrompts(
 }
 
 export async function loadCategories(): Promise<string[]> {
+  let remoteCategories: string[] = [];
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("color_prompts")
+      .select("category")
+      .eq("active", true);
+
+    if (!error && data) {
+      remoteCategories = (data as Array<{ category?: string | null }>)
+        .map((row) => row.category)
+        .filter((category): category is string => Boolean(category));
+    }
+  }
+
   const generatedPrompts = await loadGeneratedPrompts();
   return Array.from(
     new Set(
-      generatedPrompts
-        .map((prompt) => prompt.category)
+      [...remoteCategories, ...generatedPrompts.map((prompt) => prompt.category)]
         .filter((category): category is string => Boolean(category))
+        .filter((category) => category !== "general")
         .sort((a, b) => a.localeCompare(b)),
     ),
   );
@@ -154,6 +171,7 @@ export async function saveScore(
     player_name: playerName,
     total_score: Number(submission.totalScore.toFixed(2)),
     difficulty: submission.difficulty,
+    category: cleanScoreCategory(submission.category),
     rounds: submission.rounds,
   };
 
@@ -168,6 +186,7 @@ export async function saveScore(
     playerName,
     totalScore: payload.total_score,
     difficulty: submission.difficulty,
+    category: payload.category,
     createdAt: new Date().toISOString(),
   });
   localStorage.setItem(LOCAL_SCORES_KEY, JSON.stringify(scores.slice(-100)));
@@ -283,14 +302,14 @@ export async function loadChallengeScores(
   return Array.from(bestByName.values()).slice(0, 10);
 }
 
-export async function loadLeaderboard(
-  difficulty: Difficulty,
-): Promise<LeaderboardEntry[]> {
+export async function loadLeaderboard(category: string): Promise<LeaderboardEntry[]> {
+  const scoreCategory = cleanScoreCategory(category);
+
   if (supabase) {
     const { data, error } = await supabase
       .from("color_scores")
-      .select("id,player_name,total_score,difficulty,created_at")
-      .eq("difficulty", difficulty)
+      .select("id,player_name,total_score,difficulty,category,created_at")
+      .eq("category", scoreCategory)
       .order("total_score", { ascending: false })
       .order("created_at", { ascending: true })
       .limit(20);
@@ -299,7 +318,7 @@ export async function loadLeaderboard(
   }
 
   return readLocalScores()
-    .filter((entry) => entry.difficulty === difficulty)
+    .filter((entry) => entry.category === scoreCategory)
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 20);
 }
@@ -332,6 +351,7 @@ function scoreRowToEntry(row: ScoreRow): LeaderboardEntry {
     playerName: row.player_name,
     totalScore: Number(row.total_score),
     difficulty: row.difficulty,
+    category: cleanScoreCategory(row.category || "All categories"),
     createdAt: row.created_at,
   };
 }
@@ -489,19 +509,25 @@ function readLocalScores(): LeaderboardEntry[] {
     if (!value) return [];
     const parsed = JSON.parse(value);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isLeaderboardEntry);
+    return parsed.filter(isLeaderboardEntry).map((entry) => ({
+      ...entry,
+      category: cleanScoreCategory(entry.category || "All categories"),
+    }));
   } catch {
     return [];
   }
 }
 
-function isLeaderboardEntry(value: unknown): value is LeaderboardEntry {
+function isLeaderboardEntry(
+  value: unknown,
+): value is LeaderboardEntry & { category?: string } {
   if (!value || typeof value !== "object") return false;
   const entry = value as Partial<LeaderboardEntry>;
   return (
     typeof entry.id === "string" &&
     typeof entry.playerName === "string" &&
     typeof entry.totalScore === "number" &&
+    (typeof entry.category === "string" || entry.category === undefined) &&
     typeof entry.createdAt === "string" &&
     (entry.difficulty === "easy" ||
       entry.difficulty === "hard" ||
@@ -512,4 +538,9 @@ function isLeaderboardEntry(value: unknown): value is LeaderboardEntry {
 export function cleanPlayerName(value: string): string {
   const cleaned = value.trim().replace(/\s+/g, " ").slice(0, 24);
   return cleaned || "Player";
+}
+
+function cleanScoreCategory(value: string): string {
+  const cleaned = value.trim().replace(/\s+/g, " ").slice(0, 40);
+  return cleaned || "All categories";
 }

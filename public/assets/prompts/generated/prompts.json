@@ -223,5 +223,410 @@
     "active": true,
     "sortOrder": 54,
     "createdAt": "2026-05-22T17:57:19.475Z"
+  },
+  {
+    "slug": "marvin-the-martian",
+    "name": "Marvin the Martian",
+    "category": "Desenhos",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/marvin-the-martian.png",
+    "targetHsb": [
+      120,
+      99,
+      53
+    ],
+    "active": true,
+    "sortOrder": 64,
+    "createdAt": "2026-05-22T21:01:02.786Z"
+  },
+  {
+    "slug": "marvin-the-martian",
+    "name": "Marvin the Martian",
+    "category": "Desenhos",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/marvin-the-martian.png",
+    "targetHsb": [
+      120,
+      99,
+      53
+    ],
+    "active": true,
+    "sortOrder": 65,
+    "createdAt": "2026-05-22T21:01:02.786Z"
+  },
+  {
+    "slug": "marvin-the-martian",
+    "name": "Marvin the Martian",
+    "category": "Desenhos",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/marvin-the-martian.png",
+    "targetHsb": [
+      120,
+      99,
+      53
+    ],
+    "active": true,
+    "sortOrder": 66,
+    "createdAt": "2026-05-22T21:01:02.786Z"
+  },
+  {
+    "slug": "ze-jacare",
+    "name": "Zé Jacaré",
+    "category": "Desenhos",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/ze-jacare.png",
+    "targetHsb": [
+      53,
+      29,
+      44
+    ],
+    "active": true,
+    "sortOrder": 76,
+    "createdAt": "2026-05-22T21:03:28.146Z"
+  },
+  {
+    "slug": "ze-jacare",
+    "name": "Zé Jacaré",
+    "category": "Desenhos",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/ze-jacare.png",
+    "targetHsb": [
+      53,
+      29,
+      44
+    ],
+    "active": true,
+    "sortOrder": 77,
+    "createdAt": "2026-05-22T21:03:28.146Z"
+  },
+  {
+    "slug": "ze-jacare",
+    "name": "Zé Jacaré",
+    "category": "Desenhos",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/ze-jacare.png",
+    "targetHsb": [
+      53,
+      29,
+      44
+    ],
+    "active": true,
+    "sortOrder": 78,
+    "createdAt": "2026-05-22T21:03:28.146Z"
+  },
+  {
+    "slug": "charmander",
+    "name": "Charmander",
+    "category": "Pokemon",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/charmander.png",
+    "targetHsb": [
+      23,
+      97,
+      83
+    ],
+    "active": true,
+    "sortOrder": 88,
+    "createdAt": "2026-05-22T21:05:09.279Z"
+  },
+  {
+    "slug": "charmander",
+    "name": "Charmander",
+    "category": "Pokemon",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/charmander.png",
+    "targetHsb": [
+      23,
+      97,
+      83
+    ],
+    "active": true,
+    "sortOrder": 89,
+    "createdAt": "2026-05-22T21:05:09.279Z"
+  },
+  {
+    "slug": "charmander",
+    "name": "Charmander",
+    "category": "Pokemon",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/charmander.png",
+    "targetHsb": [
+      23,
+      97,
+      83
+    ],
+    "active": true,
+    "sortOrder": 90,
+    "createdAt": "2026-05-22T21:05:09.279Z"
+  },
+  {
+    "slug": "meowth",
+    "name": "Meowth",
+    "category": "Pokemon",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/meowth.png",
+    "targetHsb": [
+      42,
+      23,
+      88
+    ],
+    "active": true,
+    "sortOrder": 100,
+    "createdAt": "2026-05-22T21:06:40.146Z"
+  },
+  {
+    "slug": "meowth",
+    "name": "Meowth",
+    "category": "Pokemon",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/meowth.png",
+    "targetHsb": [
+      42,
+      23,
+      88
+    ],
+    "active": true,
+    "sortOrder": 101,
+    "createdAt": "2026-05-22T21:06:40.146Z"
+  },
+  {
+    "slug": "meowth",
+    "name": "Meowth",
+    "category": "Pokemon",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/meowth.png",
+    "targetHsb": [
+      42,
+      23,
+      88
+    ],
+    "active": true,
+    "sortOrder": 102,
+    "createdAt": "2026-05-22T21:06:40.146Z"
+  },
+  {
+    "slug": "dragonite",
+    "name": "Dragonite",
+    "category": "Pokemon",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/dragonite.png",
+    "targetHsb": [
+      173,
+      72,
+      62
+    ],
+    "active": true,
+    "sortOrder": 112,
+    "createdAt": "2026-05-22T21:07:46.305Z"
+  },
+  {
+    "slug": "dragonite",
+    "name": "Dragonite",
+    "category": "Pokemon",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/dragonite.png",
+    "targetHsb": [
+      173,
+      72,
+      62
+    ],
+    "active": true,
+    "sortOrder": 113,
+    "createdAt": "2026-05-22T21:07:46.305Z"
+  },
+  {
+    "slug": "dragonite",
+    "name": "Dragonite",
+    "category": "Pokemon",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/dragonite.png",
+    "targetHsb": [
+      173,
+      72,
+      62
+    ],
+    "active": true,
+    "sortOrder": 114,
+    "createdAt": "2026-05-22T21:07:46.305Z"
+  },
+  {
+    "slug": "ash",
+    "name": "Ash",
+    "category": "Pokemon",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/ash.png",
+    "targetHsb": [
+      227,
+      67,
+      69
+    ],
+    "active": true,
+    "sortOrder": 124,
+    "createdAt": "2026-05-22T21:12:04.257Z"
+  },
+  {
+    "slug": "ash",
+    "name": "Ash",
+    "category": "Pokemon",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/ash.png",
+    "targetHsb": [
+      227,
+      67,
+      69
+    ],
+    "active": true,
+    "sortOrder": 125,
+    "createdAt": "2026-05-22T21:12:04.257Z"
+  },
+  {
+    "slug": "ash",
+    "name": "Ash",
+    "category": "Pokemon",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/ash.png",
+    "targetHsb": [
+      227,
+      67,
+      69
+    ],
+    "active": true,
+    "sortOrder": 126,
+    "createdAt": "2026-05-22T21:12:04.257Z"
+  },
+  {
+    "slug": "pikachu",
+    "name": "Pikachu",
+    "category": "Pokemon",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/pikachu.png",
+    "targetHsb": [
+      50,
+      90,
+      100
+    ],
+    "active": true,
+    "sortOrder": 136,
+    "createdAt": "2026-05-22T21:14:22.576Z"
+  },
+  {
+    "slug": "pikachu",
+    "name": "Pikachu",
+    "category": "Pokemon",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/pikachu.png",
+    "targetHsb": [
+      50,
+      90,
+      100
+    ],
+    "active": true,
+    "sortOrder": 137,
+    "createdAt": "2026-05-22T21:14:22.576Z"
+  },
+  {
+    "slug": "pikachu",
+    "name": "Pikachu",
+    "category": "Pokemon",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/pikachu.png",
+    "targetHsb": [
+      50,
+      90,
+      100
+    ],
+    "active": true,
+    "sortOrder": 138,
+    "createdAt": "2026-05-22T21:14:22.576Z"
+  },
+  {
+    "slug": "equipe-rocket",
+    "name": "Equipe Rocket",
+    "category": "Pokemon",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/equipe-rocket.png",
+    "targetHsb": [
+      347,
+      71,
+      96
+    ],
+    "active": true,
+    "sortOrder": 148,
+    "createdAt": "2026-05-22T21:15:38.964Z"
+  },
+  {
+    "slug": "equipe-rocket",
+    "name": "Equipe Rocket",
+    "category": "Pokemon",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/equipe-rocket.png",
+    "targetHsb": [
+      347,
+      71,
+      96
+    ],
+    "active": true,
+    "sortOrder": 149,
+    "createdAt": "2026-05-22T21:15:38.964Z"
+  },
+  {
+    "slug": "equipe-rocket",
+    "name": "Equipe Rocket",
+    "category": "Pokemon",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/equipe-rocket.png",
+    "targetHsb": [
+      347,
+      71,
+      96
+    ],
+    "active": true,
+    "sortOrder": 150,
+    "createdAt": "2026-05-22T21:15:38.964Z"
+  },
+  {
+    "slug": "dick-vigarista-2",
+    "name": "Dick Vigarista 2",
+    "category": "Desenhos",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/dick-vigarista-2.png",
+    "targetHsb": [
+      359,
+      100,
+      68
+    ],
+    "active": true,
+    "sortOrder": 160,
+    "createdAt": "2026-05-22T21:17:29.925Z"
+  },
+  {
+    "slug": "dick-vigarista-2",
+    "name": "Dick Vigarista 2",
+    "category": "Desenhos",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/dick-vigarista-2.png",
+    "targetHsb": [
+      359,
+      100,
+      68
+    ],
+    "active": true,
+    "sortOrder": 161,
+    "createdAt": "2026-05-22T21:17:29.925Z"
+  },
+  {
+    "slug": "dick-vigarista-2",
+    "name": "Dick Vigarista 2",
+    "category": "Desenhos",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/dick-vigarista-2.png",
+    "targetHsb": [
+      359,
+      100,
+      68
+    ],
+    "active": true,
+    "sortOrder": 162,
+    "createdAt": "2026-05-22T21:17:29.925Z"
   }
 ]
