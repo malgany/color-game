@@ -36,7 +36,7 @@ create table if not exists public.color_scores (
 create table if not exists public.color_challenges (
   code text primary key check (code ~ '^[A-Z0-9]{6,10}$'),
   creator_name text not null check (char_length(trim(creator_name)) between 1 and 24),
-  creator_score numeric(5,2) not null check (creator_score between 0 and 50),
+  creator_score numeric(5,2) check (creator_score is null or creator_score between 0 and 50),
   difficulty public.color_difficulty not null default 'easy',
   prompts jsonb not null check (
     jsonb_typeof(prompts) = 'array'
@@ -71,6 +71,16 @@ create index if not exists color_scores_difficulty_score_idx
 
 create index if not exists color_challenges_created_idx
   on public.color_challenges (created_at desc);
+
+alter table public.color_challenges
+  alter column creator_score drop not null;
+
+alter table public.color_challenges
+  drop constraint if exists color_challenges_creator_score_check;
+
+alter table public.color_challenges
+  add constraint color_challenges_creator_score_check
+  check (creator_score is null or creator_score between 0 and 50);
 
 create index if not exists color_challenge_scores_code_score_idx
   on public.color_challenge_scores (challenge_code, total_score desc, created_at asc);
@@ -111,7 +121,7 @@ create policy "Players can create color challenges"
   with check (
     code ~ '^[A-Z0-9]{6,10}$'
     and char_length(trim(creator_name)) between 1 and 24
-    and creator_score between 0 and 50
+    and (creator_score is null or creator_score between 0 and 50)
     and jsonb_typeof(prompts) = 'array'
     and jsonb_array_length(prompts) between 1 and 5
   );

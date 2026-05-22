@@ -3,12 +3,14 @@ import {
   createChallenge,
   difficultyLabels,
   loadChallenge,
+  loadChallengeScores,
   loadCategories,
   loadLeaderboard,
   loadPrompts,
   saveChallengeScore,
   saveScore,
   type ChallengeEntry,
+  type ChallengeScoreEntry,
   type Difficulty,
   type LeaderboardEntry,
   type PromptItem,
@@ -28,6 +30,7 @@ import "./styles.css";
 type Screen =
   | "intro"
   | "category"
+  | "multiplayer"
   | "picker"
   | "result"
   | "total"
@@ -40,12 +43,16 @@ type RoundResult = {
 };
 
 type SharedChallenge = {
-  v: 1;
-  code?: string;
+  code: string;
   name: string;
-  score: number;
+  score: number | null;
   difficulty: Difficulty;
   prompts: PromptItem[];
+};
+
+type ShareResult = {
+  status: "native" | "copy" | "ready" | "failed";
+  url?: string;
 };
 
 type CompareDragState = {
@@ -59,6 +66,7 @@ const STORAGE_MUTED = "color_game_muted";
 const STORAGE_DIFFICULTY = "color_game_difficulty";
 const STORAGE_CATEGORY = "color_game_category";
 const STORAGE_PLAYER_NAME = "color_game_player_name";
+const COUNTDOWN_STEPS = ["Ready", "Set", "Go"];
 
 const icons = {
   target:
@@ -90,14 +98,21 @@ let pickerHsb: HsbColor = [180, 80, 90];
 let results: RoundResult[] = [];
 let theme = readTheme();
 let muted = localStorage.getItem(STORAGE_MUTED) === "1";
-let activeChallenge = readInlineSharedChallenge();
-let pendingChallengeCode = activeChallenge ? null : readChallengeCode();
-let selectedDifficulty = activeChallenge?.difficulty || readDifficulty();
+let activeChallenge: SharedChallenge | null = null;
+let pendingChallengeCode = readChallengeCode();
+let challengeScores: ChallengeScoreEntry[] = [];
+let selectedDifficulty = readDifficulty();
 let selectedCategory = localStorage.getItem(STORAGE_CATEGORY) || "all";
 let leaderboardDifficulty: Difficulty = selectedDifficulty;
 let pickerValueHideTimer: number | undefined;
 let availableCategories: string[] = [];
 let compareDragState: CompareDragState = null;
+let finalScorePosted = false;
+let baseScorePosted = false;
+let challengeScorePosted = false;
+let lastChallengeShareUrl: string | undefined;
+let countdownInProgress = false;
+let pickerHasSelection = false;
 
 class Sfx {
   private ctx: AudioContext | null = null;
@@ -144,6 +159,15 @@ class Sfx {
   scoreLand(): void {
     this.tone(250, 0.06, "triangle", 0.026);
     window.setTimeout(() => this.tone(640, 0.09, "sine", 0.023), 70);
+  }
+
+  countdown(step: number): void {
+    const notes = [330, 440, 660];
+    const note = notes[Math.min(step, notes.length - 1)];
+    this.tone(note, 0.09, "sine", 0.035);
+    if (step === notes.length - 1) {
+      window.setTimeout(() => this.tone(990, 0.12, "triangle", 0.024), 70);
+    }
   }
 
   toDark(): void {
@@ -223,12 +247,14 @@ app.innerHTML = `
           <p>Five images. Ten points each. Get as close as your brain can manage.</p>
           <strong>Ready?</strong>
         </div>
+        <div id="challengeIntroBoard" class="challenge-board intro-challenge-board" hidden></div>
         <div class="intro-actions">
           <button id="startButton" class="mode-button soundable" type="button" aria-label="Start game">
             ${icons.target}
           </button>
           <button id="difficultyCycle" class="difficulty-cycle soundable" type="button" aria-label="Change difficulty">Easy</button>
           <div id="difficultyPill" class="round-pill" aria-label="Selected difficulty">Choose category</div>
+          <button id="multiplayerButton" class="intro-text-button soundable" type="button">Multiplayer</button>
         </div>
       </section>
 
@@ -237,6 +263,18 @@ app.innerHTML = `
         <h2>category</h2>
         <p>Pick a set of images for this run.</p>
         <div id="categoryList" class="category-choice-list"></div>
+      </section>
+
+      <section id="multiplayerScreen" class="screen multiplayer-screen" aria-label="Multiplayer setup">
+        <button id="multiplayerBack" class="mini-close soundable" type="button" aria-label="Back to intro">Close</button>
+        <h2>multiplayer</h2>
+        <p>Create a short link first. Everyone who opens it plays the same five images and lands on the same board.</p>
+        <form id="multiplayerForm" class="multiplayer-form">
+          <input id="multiplayerNameInput" maxlength="4" autocomplete="nickname" placeholder="Name" aria-label="Name" autocapitalize="characters" spellcheck="false" />
+          <button id="createMultiplayerButton" class="score-submit soundable" type="submit">Create and copy game link</button>
+        </form>
+        <p id="multiplayerStatus" class="score-save-status"></p>
+        <div id="multiplayerLinkOutput" class="challenge-link-output" hidden></div>
       </section>
 
       <section id="pickerScreen" class="screen picker-screen" aria-label="Color picker">
@@ -322,7 +360,10 @@ app.innerHTML = `
           </div>
         </div>
         <div id="totalPalette" class="total-palette" aria-label="Round color comparisons"></div>
+        <div id="challengeResult" class="challenge-result" hidden></div>
+        <div id="challengeBoard" class="challenge-board total-challenge-board" hidden></div>
         <p id="scoreSaveStatus" class="score-save-status"></p>
+        <div id="challengeLinkOutput" class="challenge-link-output" hidden></div>
         <form id="scoreForm" class="score-form">
           <input id="playerNameInput" maxlength="4" autocomplete="nickname" placeholder="Name" aria-label="Name" autocapitalize="characters" spellcheck="false" />
           <button id="saveScoreButton" class="score-submit soundable" type="submit">Post score & challenge a friend</button>
@@ -336,6 +377,9 @@ app.innerHTML = `
         <div id="leaderboardList" class="leaderboard-list" aria-live="polite"></div>
         <button id="leaderboardRefresh" class="mini-action soundable" type="button">Refresh</button>
       </section>
+      <div id="countdownOverlay" class="countdown-overlay" aria-live="assertive" aria-hidden="true" hidden>
+        <span id="countdownText">Ready</span>
+      </div>
     </div>
   </main>
 
@@ -356,16 +400,29 @@ const refs = {
   gameCard: getEl<HTMLDivElement>("gameCard"),
   introScreen: getEl<HTMLElement>("introScreen"),
   categoryScreen: getEl<HTMLElement>("categoryScreen"),
+  multiplayerScreen: getEl<HTMLElement>("multiplayerScreen"),
   pickerScreen: getEl<HTMLElement>("pickerScreen"),
   resultScreen: getEl<HTMLElement>("resultScreen"),
   totalScreen: getEl<HTMLElement>("totalScreen"),
   totalClose: getEl<HTMLButtonElement>("totalClose"),
   totalPalette: getEl<HTMLDivElement>("totalPalette"),
+  challengeResult: getEl<HTMLDivElement>("challengeResult"),
+  challengeBoard: getEl<HTMLDivElement>("challengeBoard"),
   leaderboardScreen: getEl<HTMLElement>("leaderboardScreen"),
   startButton: getEl<HTMLButtonElement>("startButton"),
   difficultyCycle: getEl<HTMLButtonElement>("difficultyCycle"),
+  multiplayerButton: getEl<HTMLButtonElement>("multiplayerButton"),
+  challengeIntroBoard: getEl<HTMLDivElement>("challengeIntroBoard"),
+  countdownOverlay: getEl<HTMLDivElement>("countdownOverlay"),
+  countdownText: getEl<HTMLSpanElement>("countdownText"),
   categoryBack: getEl<HTMLButtonElement>("categoryBack"),
   categoryList: getEl<HTMLDivElement>("categoryList"),
+  multiplayerBack: getEl<HTMLButtonElement>("multiplayerBack"),
+  multiplayerForm: getEl<HTMLFormElement>("multiplayerForm"),
+  multiplayerNameInput: getEl<HTMLInputElement>("multiplayerNameInput"),
+  createMultiplayerButton: getEl<HTMLButtonElement>("createMultiplayerButton"),
+  multiplayerStatus: getEl<HTMLParagraphElement>("multiplayerStatus"),
+  multiplayerLinkOutput: getEl<HTMLDivElement>("multiplayerLinkOutput"),
   leaderboardGhost: getEl<HTMLButtonElement>("leaderboardGhost"),
   muteToggle: getEl<HTMLButtonElement>("muteToggle"),
   themeToggle: getEl<HTMLButtonElement>("themeToggle"),
@@ -407,6 +464,7 @@ const refs = {
   playerNameInput: getEl<HTMLInputElement>("playerNameInput"),
   saveScoreButton: getEl<HTMLButtonElement>("saveScoreButton"),
   scoreSaveStatus: getEl<HTMLParagraphElement>("scoreSaveStatus"),
+  challengeLinkOutput: getEl<HTMLDivElement>("challengeLinkOutput"),
   leaderboardClose: getEl<HTMLButtonElement>("leaderboardClose"),
   leaderboardTabs: getEl<HTMLDivElement>("leaderboardTabs"),
   leaderboardList: getEl<HTMLDivElement>("leaderboardList"),
@@ -444,12 +502,35 @@ function bindEvents(): void {
     sfx.click();
     show("intro");
   });
+  refs.multiplayerButton.addEventListener("click", () => {
+    sfx.click();
+    openMultiplayerSetup();
+  });
+  refs.multiplayerBack.addEventListener("click", () => {
+    sfx.click();
+    show("intro");
+  });
+  refs.multiplayerForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    void submitMultiplayerSetup();
+  });
+  refs.createMultiplayerButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    void submitMultiplayerSetup();
+  });
+  refs.multiplayerNameInput.addEventListener("input", () => {
+    refs.multiplayerNameInput.value = formatPlayerName(
+      refs.multiplayerNameInput.value,
+    );
+  });
   refs.leaderboardGhost.addEventListener("click", () => {
     sfx.click();
     openLeaderboard(selectedDifficulty, screen);
   });
   refs.submitButton.addEventListener("click", submitRound);
-  refs.nextButton.addEventListener("click", nextRound);
+  refs.nextButton.addEventListener("click", () => {
+    void nextRound();
+  });
   refs.totalClose.addEventListener("click", () => {
     sfx.click();
     show("intro");
@@ -510,27 +591,68 @@ async function startGame(): Promise<void> {
     updateDifficultyUi();
     queue = activeChallenge.prompts.slice(0, ROUND_COUNT);
   } else {
-    const prompts = await loadPrompts(selectedDifficulty);
-    const categoryPrompts =
-      selectedCategory === "all"
-        ? prompts
-        : prompts.filter((prompt) => prompt.category === selectedCategory);
-    queue = shuffle(categoryPrompts.length ? categoryPrompts : prompts).slice(
-      0,
-      ROUND_COUNT,
-    );
+    queue = await buildRoundQueue();
   }
   roundIndex = 0;
   results = [];
 
   refs.startButton.disabled = false;
   refs.startButton.removeAttribute("aria-busy");
+  await showPickerWithCountdown();
+}
+
+async function buildRoundQueue(): Promise<PromptItem[]> {
+  const prompts = await loadPrompts(selectedDifficulty);
+  const categoryPrompts =
+    selectedCategory === "all"
+      ? prompts
+      : prompts.filter((prompt) => prompt.category === selectedCategory);
+  return shuffle(categoryPrompts.length ? categoryPrompts : prompts).slice(
+    0,
+    ROUND_COUNT,
+  );
+}
+
+async function showPickerWithCountdown(): Promise<void> {
+  if (countdownInProgress) return;
+  countdownInProgress = true;
+  refs.submitButton.disabled = true;
+  refs.nextButton.disabled = true;
+
+  await runCountdown();
   showPicker();
+
+  refs.submitButton.disabled = false;
+  refs.nextButton.disabled = false;
+  countdownInProgress = false;
+}
+
+async function runCountdown(): Promise<void> {
+  refs.countdownOverlay.hidden = false;
+  refs.countdownOverlay.setAttribute("aria-hidden", "false");
+  refs.countdownOverlay.classList.add("active");
+
+  for (const [index, step] of COUNTDOWN_STEPS.entries()) {
+    refs.countdownText.textContent = step;
+    refs.countdownOverlay.dataset.step = String(index);
+    refs.countdownOverlay.classList.remove("tick");
+    void refs.countdownOverlay.offsetWidth;
+    refs.countdownOverlay.classList.add("tick");
+    sfx.countdown(index);
+    await wait(520);
+  }
+
+  refs.countdownOverlay.classList.remove("active", "tick");
+  refs.countdownOverlay.setAttribute("aria-hidden", "true");
+  await wait(120);
+  refs.countdownOverlay.hidden = true;
+  refs.countdownOverlay.removeAttribute("data-step");
 }
 
 function showPicker(): void {
   const prompt = currentPrompt();
   pickerHsb = randomPickerDefault(prompt.targetHsb[0], selectedDifficulty);
+  pickerHasSelection = false;
   refs.pickerRound.textContent = `${roundIndex + 1}/${queue.length}`;
   refs.pickerDifficulty.textContent = difficultyLabels[selectedDifficulty];
   refs.pickerImage.src = prompt.imageSrc;
@@ -543,6 +665,11 @@ function showPicker(): void {
 }
 
 function submitRound(): void {
+  if (countdownInProgress) return;
+  if (!pickerHasSelection) {
+    pickerHasSelection = true;
+    updatePickerUi();
+  }
   const prompt = currentPrompt();
   const picked: HsbColor = [...pickerHsb];
   const score = scoreHsb(picked, prompt.targetHsb);
@@ -573,20 +700,29 @@ function showResult(prompt: PromptItem, picked: HsbColor, score: number): void {
   show("result");
 }
 
-function nextRound(): void {
+async function nextRound(): Promise<void> {
+  if (countdownInProgress) return;
   sfx.click();
   if (roundIndex >= queue.length - 1) {
     showTotal();
     return;
   }
   roundIndex += 1;
-  showPicker();
+  await showPickerWithCountdown();
 }
 
 function showTotal(): void {
   const total = totalScore();
+  finalScorePosted = false;
+  baseScorePosted = false;
+  challengeScorePosted = false;
+  lastChallengeShareUrl = activeChallenge
+    ? buildChallengeUrl(activeChallenge.code).toString()
+    : undefined;
   refs.totalScore.textContent = total.toFixed(2);
-  refs.totalMessage.textContent = `${difficultyLabels[selectedDifficulty]} - ${totalMessage(total)}`;
+  refs.totalMessage.textContent = activeChallenge
+    ? challengeSummaryMessage(total, activeChallenge)
+    : `${difficultyLabels[selectedDifficulty]} - ${totalMessage(total)}`;
   refs.totalPalette.innerHTML = results
     .map(
       (result) => {
@@ -616,16 +752,46 @@ function showTotal(): void {
   refs.saveScoreButton.classList.remove("copied");
   refs.saveScoreButton.style.removeProperty("background");
   refs.saveScoreButton.style.removeProperty("color");
-  refs.saveScoreButton.textContent = "Post score & challenge a friend";
-  refs.scoreSaveStatus.textContent = "Post your score and copy a challenge link.";
+  refs.saveScoreButton.textContent = activeChallenge
+    ? "Post result & copy link"
+    : "Post score & challenge a friend";
+  refs.scoreSaveStatus.textContent = activeChallenge
+    ? "Post this result to the challenge and copy the same short link."
+    : "Post your score and copy a short challenge link.";
   refs.scoreSaveStatus.dataset.state = "idle";
+  hideChallengeLinkOutput();
+  renderChallengeResult(total);
+  renderChallengeBoards("total");
   sfx.scoreLand();
   show("total");
 }
 
 async function submitFinalScore(): Promise<void> {
   const playerName = formatPlayerName(refs.playerNameInput.value) || "PLAY";
+  const challenge = activeChallenge;
   refs.playerNameInput.value = playerName;
+
+  if (finalScorePosted && lastChallengeShareUrl) {
+    refs.saveScoreButton.disabled = true;
+    refs.saveScoreButton.textContent = "Copying";
+    const shared = await shareChallengeLink(
+      currentShareText(playerName, challenge),
+      new URL(lastChallengeShareUrl),
+    );
+    refs.saveScoreButton.disabled = false;
+    refs.saveScoreButton.classList.add("copied");
+    refs.saveScoreButton.textContent =
+      shared.status === "ready" ? "Link ready" : "Link copied";
+    refs.scoreSaveStatus.textContent =
+      shared.status === "ready"
+        ? "Clipboard blocked; short link is shown below."
+        : "Short challenge link copied.";
+    refs.scoreSaveStatus.dataset.state = "success";
+    if (shared.status === "ready") showChallengeLinkOutput(shared.url);
+    else hideChallengeLinkOutput();
+    return;
+  }
+
   refs.saveScoreButton.disabled = true;
   refs.saveScoreButton.textContent = "Posting";
   refs.scoreSaveStatus.textContent = "Posting score...";
@@ -634,52 +800,86 @@ async function submitFinalScore(): Promise<void> {
   try {
     const rounds = currentScoreRounds();
     const total = totalScore();
-    const savedTo = await saveScore({
-      playerName,
-      totalScore: total,
-      difficulty: selectedDifficulty,
-      rounds,
-    });
-    if (activeChallenge?.code) {
-      void saveChallengeScore({
-        challengeCode: activeChallenge.code,
+    const savedTo = baseScorePosted
+      ? "remote"
+      : await saveScore({
+        playerName,
+        totalScore: total,
+        difficulty: selectedDifficulty,
+        rounds,
+      });
+    baseScorePosted = true;
+    const challengeSaved = challenge
+      ? challengeScorePosted || await saveChallengeScore({
+        challengeCode: challenge.code,
         playerName,
         totalScore: total,
         rounds,
-      });
+      })
+      : true;
+    if (challenge && challengeSaved) {
+      challengeScorePosted = true;
+      if (challenge.score === null && playerName === challenge.name) {
+        challenge.score = total;
+      }
+      await refreshChallengeScores(challenge.code);
+      renderChallengeResult(total);
+      renderChallengeBoards("total");
     }
     localStorage.setItem(STORAGE_PLAYER_NAME, playerName);
     refs.scoreForm.classList.add("is-saved");
-    const shared = await shareScoreChallenge(playerName);
+    const shared = challenge
+      ? await shareExistingChallenge(playerName, challenge)
+      : await shareScoreChallenge(playerName);
     const saveLocation =
       savedTo === "remote" ? "Score posted." : "Score saved locally.";
+    const challengeLocation =
+      challenge && !challengeSaved ? " Challenge result could not be posted." : "";
 
-    if (shared === "failed") {
+    if (shared.status === "failed") {
       refs.saveScoreButton.textContent = "Couldn't copy";
       refs.saveScoreButton.style.background = "#333";
       refs.saveScoreButton.style.color = "#fff";
-      refs.scoreSaveStatus.textContent = `${saveLocation} Could not copy the challenge link.`;
+      refs.scoreSaveStatus.textContent = `${saveLocation}${challengeLocation} Could not create a short challenge link.`;
       refs.scoreSaveStatus.dataset.state = "error";
     } else {
       refs.saveScoreButton.classList.add("copied");
-      refs.saveScoreButton.textContent = shared === "native" ? "Shared" : "Link copied";
+      refs.saveScoreButton.textContent =
+        shared.status === "native"
+          ? "Shared"
+          : shared.status === "ready"
+            ? "Link ready"
+            : "Link copied";
       refs.scoreSaveStatus.textContent =
-        shared === "native"
-          ? `${saveLocation} Challenge opened for sharing.`
-          : `${saveLocation} Challenge link copied.`;
+        shared.status === "native"
+          ? `${saveLocation}${challengeLocation} Challenge opened for sharing.`
+          : shared.status === "ready"
+            ? `${saveLocation}${challengeLocation} Clipboard blocked; short link is shown below.`
+            : `${saveLocation}${challengeLocation} Short challenge link copied.`;
       refs.scoreSaveStatus.dataset.state = "success";
+      if (shared.status === "ready") {
+        showChallengeLinkOutput(shared.url);
+      } else {
+        hideChallengeLinkOutput();
+      }
+      finalScorePosted = !challenge || challengeSaved;
+      lastChallengeShareUrl = shared.url || lastChallengeShareUrl;
       window.setTimeout(() => {
         refs.saveScoreButton.classList.remove("copied");
         refs.saveScoreButton.style.removeProperty("background");
         refs.saveScoreButton.style.removeProperty("color");
-        refs.saveScoreButton.textContent = "Challenge a friend";
+        refs.saveScoreButton.textContent = challenge
+          ? "Copy challenge link"
+          : "Challenge a friend";
       }, 2500);
     }
     refs.saveScoreButton.disabled = false;
     sfx.scoreLand();
   } catch {
     refs.saveScoreButton.disabled = false;
-    refs.saveScoreButton.textContent = "Post score & challenge a friend";
+    refs.saveScoreButton.textContent = activeChallenge
+      ? "Post result & copy link"
+      : "Post score & challenge a friend";
     refs.scoreSaveStatus.textContent = "Could not save. Try again.";
     refs.scoreSaveStatus.dataset.state = "error";
   }
@@ -687,7 +887,7 @@ async function submitFinalScore(): Promise<void> {
 
 async function shareScoreChallenge(
   playerName: string,
-): Promise<"native" | "copy" | "failed"> {
+): Promise<ShareResult> {
   const total = Number(totalScore().toFixed(2));
   const challenge = await createChallenge({
     creatorName: playerName,
@@ -696,14 +896,50 @@ async function shareScoreChallenge(
     prompts: results.map((result) => result.prompt),
     rounds: currentScoreRounds(),
   });
-  if (!challenge) return "failed";
+  if (!challenge) return { status: "failed" };
 
+  const shareUrl = buildChallengeUrl(challenge.code);
+  return shareChallengeLink(currentShareText(playerName, null), shareUrl);
+}
+
+async function shareExistingChallenge(
+  playerName: string,
+  challenge: SharedChallenge,
+): Promise<ShareResult> {
+  const shareUrl = buildChallengeUrl(challenge.code);
+  return shareChallengeLink(currentShareText(playerName, challenge), shareUrl);
+}
+
+function currentShareText(
+  playerName: string,
+  challenge: SharedChallenge | null,
+): string {
+  const total = Number(totalScore().toFixed(2));
+  if (challenge) {
+    return `${playerName} scored ${total.toFixed(
+      2,
+    )}/50 against ${challenge.name}'s Color Game challenge.`;
+  }
+
+  return `${playerName} scored ${total.toFixed(
+    2,
+  )}/50 on Color Game. Can you beat it?`;
+}
+
+function buildChallengeUrl(code: string): URL {
   const shareUrl = new URL(window.location.href);
   shareUrl.search = "";
   shareUrl.hash = "";
-  shareUrl.searchParams.set("c", challenge.code);
-  const text = `${playerName} scored ${total}/50 on Color Game. Can you beat it?`;
+  shareUrl.searchParams.set("c", code);
+  return shareUrl;
+}
+
+async function shareChallengeLink(
+  text: string,
+  shareUrl: URL,
+): Promise<ShareResult> {
   const clipText = `${text}\n${shareUrl.toString()}`;
+  const url = shareUrl.toString();
 
   const isMobile = "ontouchstart" in window && window.innerWidth < 768;
   if (isMobile && navigator.share) {
@@ -711,30 +947,30 @@ async function shareScoreChallenge(
       await navigator.share({
         title: "Color Game challenge",
         text,
-        url: shareUrl.toString(),
+        url,
       });
-      return "native";
+      return { status: "native", url };
     } catch {
       // Fall through to clipboard, matching Dialed's behavior.
     }
   }
 
-  if (await copyText(clipText)) return "copy";
+  if (await copyText(clipText)) return { status: "copy", url };
 
   if (isMobile && navigator.share) {
     try {
       await navigator.share({
         title: "Color Game challenge",
         text,
-        url: shareUrl.toString(),
+        url,
       });
-      return "native";
+      return { status: "native", url };
     } catch {
-      return "failed";
+      return { status: "ready", url };
     }
   }
 
-  return "failed";
+  return { status: "ready", url };
 }
 
 function openLeaderboard(difficulty: Difficulty, returnTo: Screen): void {
@@ -830,20 +1066,29 @@ function updateDifficultyUi(): void {
   refs.difficultyPill.textContent = activeChallenge ? "Challenge run" : "Choose category";
   refs.gameCard.dataset.difficulty = selectedDifficulty;
   refs.difficultyCycle.disabled = Boolean(activeChallenge);
+  refs.multiplayerButton.disabled = Boolean(activeChallenge);
 }
 
 function applyChallengeIntro(): void {
-  if (!activeChallenge) return;
+  if (!activeChallenge) {
+    hideChallengeBoards();
+    return;
+  }
   const introCopy = document.querySelector<HTMLElement>(".intro-copy");
   if (introCopy) {
+    const firstLine =
+      activeChallenge.score === null
+        ? `<strong>${escapeHtml(activeChallenge.name)}</strong> started a challenge.`
+        : `<strong>${escapeHtml(activeChallenge.name)}</strong> scored ${activeChallenge.score.toFixed(
+          2,
+        )}/50.`;
     introCopy.innerHTML = `
-      <p><strong>${escapeHtml(activeChallenge.name)}</strong> scored ${activeChallenge.score.toFixed(
-        2,
-      )}/50.</p>
-      <p>Same images. Same colors. Your turn to beat it.</p>
+      <p>${firstLine}</p>
+      <p>Same images. Same colors. Every posted result stays on this link.</p>
       <strong>Ready?</strong>
     `;
   }
+  renderChallengeBoards("intro");
   refs.startButton.setAttribute("aria-label", "Start challenge");
 }
 
@@ -880,6 +1125,7 @@ async function loadPendingChallenge(): Promise<void> {
     pendingChallengeCode = null;
     selectedDifficulty = challenge.difficulty;
     leaderboardDifficulty = challenge.difficulty;
+    await refreshChallengeScores(challenge.code);
     updateDifficultyUi();
     applyChallengeIntro();
   } finally {
@@ -888,15 +1134,29 @@ async function loadPendingChallenge(): Promise<void> {
   }
 }
 
+async function refreshChallengeScores(code: string): Promise<void> {
+  challengeScores = await loadChallengeScores(code);
+  hydrateChallengeCreatorScore();
+}
+
 function challengeEntryToShared(challenge: ChallengeEntry): SharedChallenge {
   return {
-    v: 1,
     code: challenge.code,
     name: challenge.creatorName,
     score: challenge.creatorScore,
     difficulty: challenge.difficulty,
     prompts: challenge.prompts,
   };
+}
+
+function hydrateChallengeCreatorScore(): void {
+  const challenge = activeChallenge;
+  if (!challenge || challenge.score !== null) return;
+
+  const creatorEntry = challengeScores.find(
+    (entry) => entry.playerName === challenge.name,
+  );
+  if (creatorEntry) challenge.score = creatorEntry.totalScore;
 }
 
 async function refreshCategoryOptions(): Promise<void> {
@@ -909,6 +1169,74 @@ async function refreshCategoryOptions(): Promise<void> {
 function openCategorySelection(): void {
   renderCategoryChoices();
   show("category");
+}
+
+function openMultiplayerSetup(): void {
+  refs.multiplayerNameInput.value =
+    formatPlayerName(localStorage.getItem(STORAGE_PLAYER_NAME) || "") || "";
+  refs.createMultiplayerButton.textContent = activeChallenge
+    ? "Start playing"
+    : "Create and copy game link";
+  refs.createMultiplayerButton.disabled = false;
+  refs.multiplayerStatus.textContent = activeChallenge
+    ? "Short link is ready. Start when you are ready."
+    : "This creates the shared link before anyone plays.";
+  refs.multiplayerStatus.dataset.state = "idle";
+  hideMultiplayerLinkOutput();
+  show("multiplayer");
+}
+
+async function submitMultiplayerSetup(): Promise<void> {
+  if (activeChallenge) {
+    void startGame();
+    return;
+  }
+
+  const creatorName =
+    formatPlayerName(refs.multiplayerNameInput.value) || "PLAY";
+  refs.multiplayerNameInput.value = creatorName;
+  refs.createMultiplayerButton.disabled = true;
+  refs.createMultiplayerButton.textContent = "Creating";
+  refs.multiplayerStatus.textContent = "Creating multiplayer link...";
+  refs.multiplayerStatus.dataset.state = "pending";
+
+  try {
+    const prompts = await buildRoundQueue();
+    const challenge = await createChallenge({
+      creatorName,
+      difficulty: selectedDifficulty,
+      prompts,
+    });
+    if (!challenge) throw new Error("challenge create failed");
+
+    activeChallenge = challengeEntryToShared(challenge);
+    challengeScores = [];
+    localStorage.setItem(STORAGE_PLAYER_NAME, creatorName);
+    leaderboardDifficulty = selectedDifficulty;
+    lastChallengeShareUrl = buildChallengeUrl(challenge.code).toString();
+    updateDifficultyUi();
+    applyChallengeIntro();
+
+    const shared = await shareChallengeLink(
+      `${creatorName} created a Color Game challenge. Same images, same board.`,
+      new URL(lastChallengeShareUrl),
+    );
+    showMultiplayerLinkOutput(shared.url || lastChallengeShareUrl);
+    refs.multiplayerStatus.textContent =
+      shared.status === "copy"
+        ? "Short multiplayer link copied."
+        : shared.status === "native"
+          ? "Challenge opened for sharing."
+          : "Short multiplayer link is ready below.";
+    refs.multiplayerStatus.dataset.state = "success";
+    refs.createMultiplayerButton.textContent = "Start playing";
+  } catch {
+    refs.multiplayerStatus.textContent = "Could not create the link. Try again.";
+    refs.multiplayerStatus.dataset.state = "error";
+    refs.createMultiplayerButton.textContent = "Create and copy game link";
+  } finally {
+    refs.createMultiplayerButton.disabled = false;
+  }
 }
 
 function renderCategoryChoices(): void {
@@ -953,6 +1281,7 @@ function show(nextScreen: Screen): void {
   const map: Record<Screen, HTMLElement> = {
     intro: refs.introScreen,
     category: refs.categoryScreen,
+    multiplayer: refs.multiplayerScreen,
     picker: refs.pickerScreen,
     result: refs.resultScreen,
     total: refs.totalScreen,
@@ -972,7 +1301,9 @@ function show(nextScreen: Screen): void {
 function updatePickerUi(): void {
   const selectedRgb = hsbToRgb(...pickerHsb);
   const selectedCss = rgbCss(selectedRgb);
-  refs.pickerBg.style.background = selectedCss;
+  refs.pickerBg.classList.toggle("is-empty", !pickerHasSelection);
+  if (pickerHasSelection) refs.pickerBg.style.background = selectedCss;
+  else refs.pickerBg.style.removeProperty("background");
   refs.pickerValues.style.color = readableTextColor(selectedRgb);
   refs.pickerValues.previousElementSibling?.setAttribute(
     "style",
@@ -1060,6 +1391,7 @@ function updateFromStrip(
   if (channel === "s") pickerHsb[1] = Math.round((1 - position) * 100);
   if (channel === "b") pickerHsb[2] = Math.round((1 - position) * 100);
 
+  pickerHasSelection = true;
   sfx.slider();
   updatePickerUi();
   showPickerChannel(channel);
@@ -1268,6 +1600,178 @@ function totalScore(): number {
   return results.reduce((sum, result) => sum + result.score, 0);
 }
 
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
+function renderChallengeResult(total: number): void {
+  if (!activeChallenge || activeChallenge.score === null) {
+    refs.challengeResult.hidden = true;
+    refs.challengeResult.innerHTML = "";
+    refs.challengeResult.removeAttribute("data-result");
+    return;
+  }
+
+  const diff = total - activeChallenge.score;
+  const outcome =
+    Math.abs(diff) < 0.005 ? "tie" : diff > 0 ? "win" : "loss";
+  const detail =
+    outcome === "win"
+      ? `You beat ${activeChallenge.name} by ${Math.abs(diff).toFixed(2)}.`
+      : outcome === "loss"
+        ? `${activeChallenge.name} stayed ahead by ${Math.abs(diff).toFixed(2)}.`
+        : `You tied ${activeChallenge.name}.`;
+
+  refs.challengeResult.hidden = false;
+  refs.challengeResult.dataset.result = outcome;
+  refs.challengeResult.innerHTML = `
+    <div class="challenge-result-row">
+      <span>${escapeHtml(activeChallenge.name)}</span>
+      <strong>${activeChallenge.score.toFixed(2)}</strong>
+    </div>
+    <div class="challenge-result-row is-you">
+      <span>You</span>
+      <strong>${total.toFixed(2)}</strong>
+    </div>
+    <p>${escapeHtml(detail)}</p>
+  `;
+}
+
+function renderChallengeBoards(scope: "intro" | "total" | "all" = "all"): void {
+  if (!activeChallenge) {
+    hideChallengeBoards();
+    return;
+  }
+
+  if (scope === "intro" || scope === "all") {
+    renderChallengeBoard(refs.challengeIntroBoard, 4);
+  }
+  if (scope === "total" || scope === "all") {
+    renderChallengeBoard(refs.challengeBoard, 6);
+  }
+}
+
+function renderChallengeBoard(container: HTMLElement, limit: number): void {
+  const challenge = activeChallenge;
+  if (!challenge) return;
+  const entries = challengeBoardEntries().slice(0, limit);
+  container.hidden = false;
+  container.innerHTML = `
+    <div class="challenge-board-head">
+      <span>Challenge board</span>
+      <em>${entries.length} ${entries.length === 1 ? "posted score" : "posted scores"}</em>
+    </div>
+    <div class="challenge-board-list">
+      ${
+        entries.length
+          ? entries.map((entry, index) => {
+          const isOrigin =
+            challenge.score !== null &&
+            entry.playerName === challenge.name &&
+            Math.abs(entry.totalScore - challenge.score) < 0.005;
+          return `
+            <div class="challenge-board-row ${isOrigin ? "is-origin" : ""}">
+              <span>${index + 1}</span>
+              <strong>${escapeHtml(entry.playerName)}</strong>
+              <em>${entry.totalScore.toFixed(2)}</em>
+            </div>
+          `;
+        }).join("")
+          : '<div class="challenge-board-empty">No posted scores yet.</div>'
+      }
+    </div>
+  `;
+}
+
+function challengeBoardEntries(): ChallengeScoreEntry[] {
+  const challenge = activeChallenge;
+  if (!challenge) return [];
+
+  const entries = [...challengeScores];
+  const hasCreator = entries.some(
+    (entry) =>
+      challenge.score !== null &&
+      entry.playerName === challenge.name &&
+      Math.abs(entry.totalScore - challenge.score) < 0.005,
+  );
+
+  if (!hasCreator && challenge.score !== null) {
+    entries.push({
+      id: `challenge-${challenge.code}`,
+      playerName: challenge.name,
+      totalScore: challenge.score,
+      createdAt: "",
+    });
+  }
+
+  return entries.sort((a, b) => {
+    if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+    return a.createdAt.localeCompare(b.createdAt);
+  });
+}
+
+function hideChallengeBoards(): void {
+  refs.challengeIntroBoard.hidden = true;
+  refs.challengeIntroBoard.innerHTML = "";
+  refs.challengeBoard.hidden = true;
+  refs.challengeBoard.innerHTML = "";
+}
+
+function showChallengeLinkOutput(url?: string): void {
+  if (!url) {
+    hideChallengeLinkOutput();
+    return;
+  }
+
+  refs.challengeLinkOutput.hidden = false;
+  refs.challengeLinkOutput.innerHTML = `
+    <span>Short link</span>
+    <a href="${escapeHtml(url)}">${escapeHtml(url)}</a>
+  `;
+}
+
+function hideChallengeLinkOutput(): void {
+  refs.challengeLinkOutput.hidden = true;
+  refs.challengeLinkOutput.innerHTML = "";
+}
+
+function showMultiplayerLinkOutput(url?: string): void {
+  if (!url) {
+    hideMultiplayerLinkOutput();
+    return;
+  }
+
+  refs.multiplayerLinkOutput.hidden = false;
+  refs.multiplayerLinkOutput.innerHTML = `
+    <span>Short link</span>
+    <a href="${escapeHtml(url)}">${escapeHtml(url)}</a>
+  `;
+}
+
+function hideMultiplayerLinkOutput(): void {
+  refs.multiplayerLinkOutput.hidden = true;
+  refs.multiplayerLinkOutput.innerHTML = "";
+}
+
+function challengeSummaryMessage(
+  total: number,
+  challenge: SharedChallenge,
+): string {
+  if (challenge.score === null) {
+    return `${difficultyLabels[selectedDifficulty]} challenge - post your result.`;
+  }
+  const diff = total - challenge.score;
+  if (Math.abs(diff) < 0.005) return `${difficultyLabels[selectedDifficulty]} challenge - tied.`;
+  if (diff > 0) {
+    return `${difficultyLabels[selectedDifficulty]} challenge - you won by ${diff.toFixed(2)}.`;
+  }
+  return `${difficultyLabels[selectedDifficulty]} challenge - ${Math.abs(diff).toFixed(
+    2,
+  )} behind.`;
+}
+
 function currentScoreRounds(): ScoreRound[] {
   return results.map((result) => ({
     promptId: result.prompt.id,
@@ -1308,26 +1812,6 @@ async function copyText(value: string): Promise<boolean> {
   }
 }
 
-function readInlineSharedChallenge(): SharedChallenge | null {
-  const value = new URLSearchParams(window.location.search).get("c");
-  if (!value || isShortChallengeCode(value)) return null;
-
-  try {
-    const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = normalized.padEnd(
-      normalized.length + ((4 - (normalized.length % 4)) % 4),
-      "=",
-    );
-    const binary = atob(padded);
-    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-    const parsed = JSON.parse(new TextDecoder().decode(bytes)) as Partial<SharedChallenge>;
-    if (!isSharedChallenge(parsed)) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
 function readChallengeCode(): string | null {
   const value = new URLSearchParams(window.location.search).get("c");
   if (!value || !isShortChallengeCode(value)) return null;
@@ -1336,34 +1820,6 @@ function readChallengeCode(): string | null {
 
 function isShortChallengeCode(value: string): boolean {
   return /^[a-zA-Z0-9]{6,10}$/.test(value);
-}
-
-function isSharedChallenge(value: Partial<SharedChallenge>): value is SharedChallenge {
-  return (
-    value.v === 1 &&
-    typeof value.name === "string" &&
-    typeof value.score === "number" &&
-    (value.difficulty === "easy" ||
-      value.difficulty === "hard" ||
-      value.difficulty === "brutal") &&
-    Array.isArray(value.prompts) &&
-    value.prompts.length > 0 &&
-    value.prompts.length <= ROUND_COUNT &&
-    value.prompts.every(isChallengePrompt)
-  );
-}
-
-function isChallengePrompt(value: unknown): value is PromptItem {
-  if (!value || typeof value !== "object") return false;
-  const prompt = value as Partial<PromptItem>;
-  return (
-    typeof prompt.id === "string" &&
-    typeof prompt.name === "string" &&
-    typeof prompt.imageSrc === "string" &&
-    Array.isArray(prompt.targetHsb) &&
-    prompt.targetHsb.length === 3 &&
-    prompt.targetHsb.every((channel) => typeof channel === "number")
-  );
 }
 
 function shuffle<T>(items: T[]): T[] {

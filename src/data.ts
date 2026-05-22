@@ -28,9 +28,16 @@ type ScoreRow = {
 type ChallengeRow = {
   code: string;
   creator_name: string;
-  creator_score: number | string;
+  creator_score: number | string | null;
   difficulty: Difficulty;
   prompts: unknown;
+  created_at: string;
+};
+
+type ChallengeScoreRow = {
+  id: string;
+  player_name: string;
+  total_score: number | string;
   created_at: string;
 };
 
@@ -60,7 +67,7 @@ export type LeaderboardEntry = {
 export type ChallengeEntry = {
   code: string;
   creatorName: string;
-  creatorScore: number;
+  creatorScore: number | null;
   difficulty: Difficulty;
   prompts: PromptItem[];
   createdAt: string;
@@ -68,10 +75,10 @@ export type ChallengeEntry = {
 
 export type ChallengeSubmission = {
   creatorName: string;
-  creatorScore: number;
+  creatorScore?: number;
   difficulty: Difficulty;
   prompts: PromptItem[];
-  rounds: ScoreRound[];
+  rounds?: ScoreRound[];
 };
 
 export type ChallengeScoreSubmission = {
@@ -79,6 +86,13 @@ export type ChallengeScoreSubmission = {
   playerName: string;
   totalScore: number;
   rounds: ScoreRound[];
+};
+
+export type ChallengeScoreEntry = {
+  id: string;
+  playerName: string;
+  totalScore: number;
+  createdAt: string;
 };
 
 const LOCAL_SCORES_KEY = "color_game_local_scores";
@@ -167,14 +181,18 @@ export async function createChallenge(
 
   const creatorName = cleanPlayerName(submission.creatorName);
   const prompts = submission.prompts.slice(0, 5).map(serializePrompt);
-  const rows = submission.rounds.slice(0, 5).map(serializeRound);
+  const rows = submission.rounds?.slice(0, 5).map(serializeRound) || [];
+  const creatorScore =
+    typeof submission.creatorScore === "number"
+      ? Number(submission.creatorScore.toFixed(2))
+      : null;
 
   for (let attempt = 0; attempt < 6; attempt += 1) {
     const code = randomChallengeCode();
     const payload = {
       code,
       creator_name: creatorName,
-      creator_score: Number(submission.creatorScore.toFixed(2)),
+      creator_score: creatorScore,
       difficulty: submission.difficulty,
       prompts,
     };
@@ -190,12 +208,14 @@ export async function createChallenge(
       return null;
     }
 
-    await saveChallengeScore({
-      challengeCode: code,
-      playerName: creatorName,
-      totalScore: submission.creatorScore,
-      rounds: rows,
-    });
+    if (creatorScore !== null && rows.length) {
+      await saveChallengeScore({
+        challengeCode: code,
+        playerName: creatorName,
+        totalScore: creatorScore,
+        rounds: rows,
+      });
+    }
 
     return challengeRowToEntry(data as ChallengeRow);
   }
@@ -237,6 +257,32 @@ export async function saveChallengeScore(
   return !error;
 }
 
+export async function loadChallengeScores(
+  code: string,
+): Promise<ChallengeScoreEntry[]> {
+  if (!supabase) return [];
+  const challengeCode = normalizeChallengeCode(code);
+  if (!challengeCode) return [];
+
+  const { data, error } = await supabase
+    .from("color_challenge_scores")
+    .select("id,player_name,total_score,created_at")
+    .eq("challenge_code", challengeCode)
+    .order("total_score", { ascending: false })
+    .order("created_at", { ascending: true })
+    .limit(30);
+
+  if (error || !data) return [];
+
+  const bestByName = new Map<string, ChallengeScoreEntry>();
+  (data as ChallengeScoreRow[]).forEach((row) => {
+    const entry = challengeScoreRowToEntry(row);
+    if (!bestByName.has(entry.playerName)) bestByName.set(entry.playerName, entry);
+  });
+
+  return Array.from(bestByName.values()).slice(0, 10);
+}
+
 export async function loadLeaderboard(
   difficulty: Difficulty,
 ): Promise<LeaderboardEntry[]> {
@@ -273,7 +319,7 @@ function challengeRowToEntry(row: ChallengeRow): ChallengeEntry | null {
   return {
     code: row.code,
     creatorName: row.creator_name,
-    creatorScore: Number(row.creator_score),
+    creatorScore: row.creator_score === null ? null : Number(row.creator_score),
     difficulty: row.difficulty,
     prompts,
     createdAt: row.created_at,
@@ -286,6 +332,15 @@ function scoreRowToEntry(row: ScoreRow): LeaderboardEntry {
     playerName: row.player_name,
     totalScore: Number(row.total_score),
     difficulty: row.difficulty,
+    createdAt: row.created_at,
+  };
+}
+
+function challengeScoreRowToEntry(row: ChallengeScoreRow): ChallengeScoreEntry {
+  return {
+    id: row.id,
+    playerName: row.player_name,
+    totalScore: Number(row.total_score),
     createdAt: row.created_at,
   };
 }
