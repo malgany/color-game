@@ -470,6 +470,7 @@ const refs = {
 
 applyTheme();
 updateMuteButton();
+syncViewportHeight();
 buildHueGradient();
 updateRunUi();
 bindEvents();
@@ -488,13 +489,17 @@ function bindEvents(): void {
 
   refs.startButton.addEventListener("click", () => {
     sfx.click();
-    if (activeChallenge) void startGame();
-    else openCategorySelection();
+    if (activeChallenge) {
+      requestMobileFullscreen();
+      void startGame();
+    } else openCategorySelection();
   });
   refs.categoryButton.addEventListener("click", () => {
     sfx.click();
-    if (activeChallenge) void startGame();
-    else openCategorySelection();
+    if (activeChallenge) {
+      requestMobileFullscreen();
+      void startGame();
+    } else openCategorySelection();
   });
   refs.categoryButton.addEventListener("mouseenter", () => {
     sfx.hover();
@@ -562,10 +567,13 @@ function bindEvents(): void {
   refs.themeToggle.addEventListener("click", toggleTheme);
   bindCompareDivider();
   window.addEventListener("resize", () => {
+    syncViewportHeight();
     buildHueGradient();
     updatePickerUi();
     setComparePosition(50);
   });
+  window.visualViewport?.addEventListener("resize", syncViewportHeight);
+  window.visualViewport?.addEventListener("scroll", syncViewportHeight);
   window.addEventListener("color-game:prompts-updated", () => {
     void refreshCategoryOptions();
   });
@@ -1199,6 +1207,7 @@ function openMultiplayerSetup(): void {
 
 async function submitMultiplayerSetup(): Promise<void> {
   if (activeChallenge) {
+    requestMobileFullscreen();
     void startGame();
     return;
   }
@@ -1276,6 +1285,7 @@ function renderCategoryChoices(): void {
         leaderboardCategory = scoreCategoryLabel();
         updateRunUi();
         sfx.click();
+        requestMobileFullscreen();
         void startGame();
       });
       button.addEventListener("mouseenter", () => sfx.hover());
@@ -1507,6 +1517,32 @@ function readTheme(): "light" | "dark" {
   const stored = localStorage.getItem(STORAGE_THEME);
   if (stored === "light" || stored === "dark") return stored;
   return "light";
+}
+
+function syncViewportHeight(): void {
+  const height = window.visualViewport?.height || window.innerHeight;
+  document.documentElement.style.setProperty(
+    "--visual-viewport-height",
+    `${Math.round(height)}px`,
+  );
+}
+
+function requestMobileFullscreen(): void {
+  if (!window.matchMedia("(max-width: 720px)").matches) return;
+  if (document.fullscreenElement) return;
+
+  const root = document.documentElement as HTMLElement & {
+    webkitRequestFullscreen?: () => Promise<void> | void;
+  };
+  const request = root.requestFullscreen || root.webkitRequestFullscreen;
+  if (!request) return;
+
+  try {
+    const result = request.call(root);
+    if (result instanceof Promise) void result.catch(() => {});
+  } catch {
+    // Browser fullscreen support varies on mobile; layout fixes still apply.
+  }
 }
 
 function currentPrompt(): PromptItem {

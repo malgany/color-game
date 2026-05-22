@@ -1441,13 +1441,24 @@ body:not([data-screen="intro"]) .footer-links {
 }
 
 @media (max-width: 720px) {
+  :root {
+    --mobile-viewport-height: var(--visual-viewport-height, 100dvh);
+    --mobile-action-bottom: max(76px, calc(76px + env(safe-area-inset-bottom)));
+  }
+
   html,
-  body {
+  body,
+  #app {
+    width: 100%;
+    height: var(--mobile-viewport-height);
+    min-height: var(--mobile-viewport-height);
     overflow: hidden;
     background: #000;
   }
 
   body {
+    position: fixed;
+    inset: 0;
     --page-bg: #000;
     --page-text: #fff;
     --active-text: #fff;
@@ -1492,13 +1503,15 @@ body:not([data-screen="intro"]) .footer-links {
 
   .page-shell {
     display: block;
-    min-height: 100vh;
+    height: var(--mobile-viewport-height);
+    min-height: var(--mobile-viewport-height);
     padding: 0;
   }
 
   .game-card {
     width: 100vw;
-    height: 100vh;
+    height: var(--mobile-viewport-height);
+    min-height: var(--mobile-viewport-height);
     border-radius: 0;
     box-shadow: none;
   }
@@ -1659,7 +1672,7 @@ body:not([data-screen="intro"]) .footer-links {
 
   .go-button {
     right: 30px;
-    bottom: max(30px, env(safe-area-inset-bottom));
+    bottom: var(--mobile-action-bottom);
   }
 
   .total-screen,
