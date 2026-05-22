@@ -321,7 +321,7 @@ app.innerHTML = `
     </div>
   </main>
 
-  <footer class="footer-links" aria-label="Footer links">
+  <footer class="footer-links is-hidden" aria-label="Footer links" aria-hidden="true">
     <a class="soundable" href="#">Discord</a>
     <span>-</span>
     <a class="soundable" href="#">Press</a>

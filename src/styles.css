@@ -770,11 +770,11 @@ svg {
 }
 
 .compare-label-left {
-  right: 24px;
+  right: 42px;
 }
 
 .compare-label-right {
-  left: 24px;
+  left: 42px;
 }
 
 .compare-code {
@@ -1051,6 +1051,10 @@ svg {
   letter-spacing: -0.18px;
 }
 
+.footer-links.is-hidden {
+  display: none;
+}
+
 .footer-links a:first-child {
   color: var(--page-text);
 }
@@ -1167,7 +1171,7 @@ body:not([data-screen="intro"]) .footer-links {
   }
 
   .top-actions {
-    display: flex;
+    display: none;
     gap: 18px;
     margin-left: auto;
   }
