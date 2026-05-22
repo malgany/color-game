@@ -1,14 +1,18 @@
 import { difficulties } from "./catalog";
 import {
-  cleanPlayerName,
+  createChallenge,
   difficultyLabels,
+  loadChallenge,
   loadCategories,
   loadLeaderboard,
   loadPrompts,
+  saveChallengeScore,
   saveScore,
+  type ChallengeEntry,
   type Difficulty,
   type LeaderboardEntry,
   type PromptItem,
+  type ScoreRound,
 } from "./data";
 import {
   type HsbColor,
@@ -33,6 +37,15 @@ type RoundResult = {
   prompt: PromptItem;
   picked: HsbColor;
   score: number;
+};
+
+type SharedChallenge = {
+  v: 1;
+  code?: string;
+  name: string;
+  score: number;
+  difficulty: Difficulty;
+  prompts: PromptItem[];
 };
 
 type CompareDragState = {
@@ -77,7 +90,9 @@ let pickerHsb: HsbColor = [180, 80, 90];
 let results: RoundResult[] = [];
 let theme = readTheme();
 let muted = localStorage.getItem(STORAGE_MUTED) === "1";
-let selectedDifficulty = readDifficulty();
+let activeChallenge = readInlineSharedChallenge();
+let pendingChallengeCode = activeChallenge ? null : readChallengeCode();
+let selectedDifficulty = activeChallenge?.difficulty || readDifficulty();
 let selectedCategory = localStorage.getItem(STORAGE_CATEGORY) || "all";
 let leaderboardDifficulty: Difficulty = selectedDifficulty;
 let pickerValueHideTimer: number | undefined;
@@ -297,18 +312,21 @@ app.innerHTML = `
 
       <section id="totalScreen" class="screen total-screen" aria-label="Final score">
         <button id="totalClose" class="total-close soundable" type="button" aria-label="Back to intro">Close</button>
-        <h2>total</h2>
-        <div class="total-score">
-          <span id="totalScore">0.00</span><span>/50</span>
+        <div class="total-header">
+          <div>
+            <h2>total</h2>
+            <p id="totalMessage">Five colors, one score.</p>
+          </div>
+          <div class="total-score">
+            <span id="totalScore">0.00</span><span>/50</span>
+          </div>
         </div>
-        <p id="totalMessage">Five colors, one score.</p>
-        <div id="roundList" class="round-list"></div>
-        <form id="scoreForm" class="score-form">
-          <label for="playerNameInput">name</label>
-          <input id="playerNameInput" maxlength="24" autocomplete="nickname" placeholder="nickname" />
-          <button id="saveScoreButton" class="score-submit soundable" type="submit">Save</button>
-        </form>
+        <div id="totalPalette" class="total-palette" aria-label="Round color comparisons"></div>
         <p id="scoreSaveStatus" class="score-save-status"></p>
+        <form id="scoreForm" class="score-form">
+          <input id="playerNameInput" maxlength="4" autocomplete="nickname" placeholder="Name" aria-label="Name" autocapitalize="characters" spellcheck="false" />
+          <button id="saveScoreButton" class="score-submit soundable" type="submit">Post score & challenge a friend</button>
+        </form>
       </section>
 
       <section id="leaderboardScreen" class="screen leaderboard-screen" aria-label="High scores">
@@ -342,6 +360,7 @@ const refs = {
   resultScreen: getEl<HTMLElement>("resultScreen"),
   totalScreen: getEl<HTMLElement>("totalScreen"),
   totalClose: getEl<HTMLButtonElement>("totalClose"),
+  totalPalette: getEl<HTMLDivElement>("totalPalette"),
   leaderboardScreen: getEl<HTMLElement>("leaderboardScreen"),
   startButton: getEl<HTMLButtonElement>("startButton"),
   difficultyCycle: getEl<HTMLButtonElement>("difficultyCycle"),
@@ -384,7 +403,6 @@ const refs = {
   nextButton: getEl<HTMLButtonElement>("nextButton"),
   totalScore: getEl<HTMLSpanElement>("totalScore"),
   totalMessage: getEl<HTMLParagraphElement>("totalMessage"),
-  roundList: getEl<HTMLDivElement>("roundList"),
   scoreForm: getEl<HTMLFormElement>("scoreForm"),
   playerNameInput: getEl<HTMLInputElement>("playerNameInput"),
   saveScoreButton: getEl<HTMLButtonElement>("saveScoreButton"),
@@ -401,6 +419,8 @@ buildHueGradient();
 updateDifficultyUi();
 bindEvents();
 void refreshCategoryOptions();
+applyChallengeIntro();
+void loadPendingChallenge();
 if (debugToolsEnabled) {
   void import("./debugColorRemover").then(({ initDebugColorRemover }) => {
     initDebugColorRemover();
@@ -413,7 +433,8 @@ function bindEvents(): void {
 
   refs.startButton.addEventListener("click", () => {
     sfx.click();
-    openCategorySelection();
+    if (activeChallenge) void startGame();
+    else openCategorySelection();
   });
   refs.difficultyCycle.addEventListener("click", () => {
     cycleDifficulty();
@@ -444,6 +465,9 @@ function bindEvents(): void {
   refs.scoreForm.addEventListener("submit", (event) => {
     event.preventDefault();
     void submitFinalScore();
+  });
+  refs.playerNameInput.addEventListener("input", () => {
+    refs.playerNameInput.value = formatPlayerName(refs.playerNameInput.value);
   });
   refs.resultClose.addEventListener("click", () => {
     sfx.click();
@@ -480,15 +504,22 @@ async function startGame(): Promise<void> {
   refs.startButton.disabled = true;
   refs.startButton.setAttribute("aria-busy", "true");
 
-  const prompts = await loadPrompts(selectedDifficulty);
-  const categoryPrompts =
-    selectedCategory === "all"
-      ? prompts
-      : prompts.filter((prompt) => prompt.category === selectedCategory);
-  queue = shuffle(categoryPrompts.length ? categoryPrompts : prompts).slice(
-    0,
-    ROUND_COUNT,
-  );
+  if (activeChallenge) {
+    selectedDifficulty = activeChallenge.difficulty;
+    leaderboardDifficulty = selectedDifficulty;
+    updateDifficultyUi();
+    queue = activeChallenge.prompts.slice(0, ROUND_COUNT);
+  } else {
+    const prompts = await loadPrompts(selectedDifficulty);
+    const categoryPrompts =
+      selectedCategory === "all"
+        ? prompts
+        : prompts.filter((prompt) => prompt.category === selectedCategory);
+    queue = shuffle(categoryPrompts.length ? categoryPrompts : prompts).slice(
+      0,
+      ROUND_COUNT,
+    );
+  }
   roundIndex = 0;
   results = [];
 
@@ -504,6 +535,8 @@ function showPicker(): void {
   refs.pickerDifficulty.textContent = difficultyLabels[selectedDifficulty];
   refs.pickerImage.src = prompt.imageSrc;
   refs.pickerImage.alt = `${prompt.name} transparent color prompt`;
+  refs.pickerValueLabel.textContent = "";
+  refs.pickerValues.textContent = "";
   refs.pickerValues.parentElement?.classList.remove("active");
   updatePickerUi();
   show("picker");
@@ -554,64 +587,154 @@ function showTotal(): void {
   const total = totalScore();
   refs.totalScore.textContent = total.toFixed(2);
   refs.totalMessage.textContent = `${difficultyLabels[selectedDifficulty]} - ${totalMessage(total)}`;
-  refs.roundList.innerHTML = results
+  refs.totalPalette.innerHTML = results
     .map(
-      (result, index) => `
-        <div class="round-row">
-          <span>${index + 1}</span>
-          <strong>${escapeHtml(result.prompt.name)}</strong>
-          <em>${result.score.toFixed(2)}</em>
-        </div>
-      `,
+      (result) => {
+        const scoreTextColor = readableTextColor(hsbToRgb(...result.prompt.targetHsb));
+        const scoreShadow =
+          scoreTextColor === "#000"
+            ? "0 1px rgba(255, 255, 255, 0.28)"
+            : "0 1px 8px rgba(0, 0, 0, 0.56)";
+        return `
+          <div
+            class="total-color-tile"
+            style="--picked: ${hsbCss(result.picked)}; --target: ${hsbCss(
+              result.prompt.targetHsb,
+            )}; --score-text: ${scoreTextColor}; --score-shadow: ${scoreShadow};"
+            title="${escapeHtml(result.prompt.name)}: ${result.score.toFixed(2)}"
+          >
+            <span>${result.score.toFixed(2)}</span>
+          </div>
+        `;
+      },
     )
     .join("");
   refs.playerNameInput.value =
-    localStorage.getItem(STORAGE_PLAYER_NAME) || "";
+    formatPlayerName(localStorage.getItem(STORAGE_PLAYER_NAME) || "");
   refs.scoreForm.classList.remove("is-saved");
   refs.saveScoreButton.disabled = false;
-  refs.saveScoreButton.textContent = "Save";
-  refs.scoreSaveStatus.textContent = "Save your score to enter the board.";
+  refs.saveScoreButton.classList.remove("copied");
+  refs.saveScoreButton.style.removeProperty("background");
+  refs.saveScoreButton.style.removeProperty("color");
+  refs.saveScoreButton.textContent = "Post score & challenge a friend";
+  refs.scoreSaveStatus.textContent = "Post your score and copy a challenge link.";
   refs.scoreSaveStatus.dataset.state = "idle";
   sfx.scoreLand();
   show("total");
 }
 
 async function submitFinalScore(): Promise<void> {
-  const playerName = cleanPlayerName(refs.playerNameInput.value);
+  const playerName = formatPlayerName(refs.playerNameInput.value) || "PLAY";
   refs.playerNameInput.value = playerName;
   refs.saveScoreButton.disabled = true;
-  refs.saveScoreButton.textContent = "Saving";
-  refs.scoreSaveStatus.textContent = "Saving score...";
+  refs.saveScoreButton.textContent = "Posting";
+  refs.scoreSaveStatus.textContent = "Posting score...";
   refs.scoreSaveStatus.dataset.state = "pending";
 
   try {
+    const rounds = currentScoreRounds();
+    const total = totalScore();
     const savedTo = await saveScore({
       playerName,
-      totalScore: totalScore(),
+      totalScore: total,
       difficulty: selectedDifficulty,
-      rounds: results.map((result) => ({
-        promptId: result.prompt.id,
-        promptName: result.prompt.name,
-        picked: result.picked,
-        target: result.prompt.targetHsb,
-        score: Number(result.score.toFixed(2)),
-      })),
+      rounds,
     });
+    if (activeChallenge?.code) {
+      void saveChallengeScore({
+        challengeCode: activeChallenge.code,
+        playerName,
+        totalScore: total,
+        rounds,
+      });
+    }
     localStorage.setItem(STORAGE_PLAYER_NAME, playerName);
     refs.scoreForm.classList.add("is-saved");
-    refs.saveScoreButton.textContent = "Saved";
-    refs.scoreSaveStatus.textContent =
-      savedTo === "remote"
-        ? "Saved to high scores."
-        : "Saved locally. Supabase is unavailable.";
-    refs.scoreSaveStatus.dataset.state = "success";
+    const shared = await shareScoreChallenge(playerName);
+    const saveLocation =
+      savedTo === "remote" ? "Score posted." : "Score saved locally.";
+
+    if (shared === "failed") {
+      refs.saveScoreButton.textContent = "Couldn't copy";
+      refs.saveScoreButton.style.background = "#333";
+      refs.saveScoreButton.style.color = "#fff";
+      refs.scoreSaveStatus.textContent = `${saveLocation} Could not copy the challenge link.`;
+      refs.scoreSaveStatus.dataset.state = "error";
+    } else {
+      refs.saveScoreButton.classList.add("copied");
+      refs.saveScoreButton.textContent = shared === "native" ? "Shared" : "Link copied";
+      refs.scoreSaveStatus.textContent =
+        shared === "native"
+          ? `${saveLocation} Challenge opened for sharing.`
+          : `${saveLocation} Challenge link copied.`;
+      refs.scoreSaveStatus.dataset.state = "success";
+      window.setTimeout(() => {
+        refs.saveScoreButton.classList.remove("copied");
+        refs.saveScoreButton.style.removeProperty("background");
+        refs.saveScoreButton.style.removeProperty("color");
+        refs.saveScoreButton.textContent = "Challenge a friend";
+      }, 2500);
+    }
+    refs.saveScoreButton.disabled = false;
     sfx.scoreLand();
   } catch {
     refs.saveScoreButton.disabled = false;
-    refs.saveScoreButton.textContent = "Save";
+    refs.saveScoreButton.textContent = "Post score & challenge a friend";
     refs.scoreSaveStatus.textContent = "Could not save. Try again.";
     refs.scoreSaveStatus.dataset.state = "error";
   }
+}
+
+async function shareScoreChallenge(
+  playerName: string,
+): Promise<"native" | "copy" | "failed"> {
+  const total = Number(totalScore().toFixed(2));
+  const challenge = await createChallenge({
+    creatorName: playerName,
+    creatorScore: total,
+    difficulty: selectedDifficulty,
+    prompts: results.map((result) => result.prompt),
+    rounds: currentScoreRounds(),
+  });
+  if (!challenge) return "failed";
+
+  const shareUrl = new URL(window.location.href);
+  shareUrl.search = "";
+  shareUrl.hash = "";
+  shareUrl.searchParams.set("c", challenge.code);
+  const text = `${playerName} scored ${total}/50 on Color Game. Can you beat it?`;
+  const clipText = `${text}\n${shareUrl.toString()}`;
+
+  const isMobile = "ontouchstart" in window && window.innerWidth < 768;
+  if (isMobile && navigator.share) {
+    try {
+      await navigator.share({
+        title: "Color Game challenge",
+        text,
+        url: shareUrl.toString(),
+      });
+      return "native";
+    } catch {
+      // Fall through to clipboard, matching Dialed's behavior.
+    }
+  }
+
+  if (await copyText(clipText)) return "copy";
+
+  if (isMobile && navigator.share) {
+    try {
+      await navigator.share({
+        title: "Color Game challenge",
+        text,
+        url: shareUrl.toString(),
+      });
+      return "native";
+    } catch {
+      return "failed";
+    }
+  }
+
+  return "failed";
 }
 
 function openLeaderboard(difficulty: Difficulty, returnTo: Screen): void {
@@ -704,8 +827,76 @@ function setDifficulty(difficulty: Difficulty): void {
 
 function updateDifficultyUi(): void {
   refs.difficultyCycle.textContent = difficultyLabels[selectedDifficulty];
-  refs.difficultyPill.textContent = "Choose category";
+  refs.difficultyPill.textContent = activeChallenge ? "Challenge run" : "Choose category";
   refs.gameCard.dataset.difficulty = selectedDifficulty;
+  refs.difficultyCycle.disabled = Boolean(activeChallenge);
+}
+
+function applyChallengeIntro(): void {
+  if (!activeChallenge) return;
+  const introCopy = document.querySelector<HTMLElement>(".intro-copy");
+  if (introCopy) {
+    introCopy.innerHTML = `
+      <p><strong>${escapeHtml(activeChallenge.name)}</strong> scored ${activeChallenge.score.toFixed(
+        2,
+      )}/50.</p>
+      <p>Same images. Same colors. Your turn to beat it.</p>
+      <strong>Ready?</strong>
+    `;
+  }
+  refs.startButton.setAttribute("aria-label", "Start challenge");
+}
+
+async function loadPendingChallenge(): Promise<void> {
+  if (!pendingChallengeCode) return;
+
+  refs.startButton.disabled = true;
+  refs.startButton.setAttribute("aria-busy", "true");
+  const introCopy = document.querySelector<HTMLElement>(".intro-copy");
+  if (introCopy) {
+    introCopy.innerHTML = `
+      <p>Loading challenge ${escapeHtml(pendingChallengeCode)}...</p>
+      <p>Fetching the same images and target colors.</p>
+      <strong>One moment.</strong>
+    `;
+  }
+
+  try {
+    const challenge = await loadChallenge(pendingChallengeCode);
+    if (!challenge) {
+      pendingChallengeCode = null;
+      if (introCopy) {
+        introCopy.innerHTML = `
+          <p>This challenge link was not found.</p>
+          <p>You can still start a normal five-image run.</p>
+          <strong>Ready?</strong>
+        `;
+      }
+      refs.startButton.setAttribute("aria-label", "Start game");
+      return;
+    }
+
+    activeChallenge = challengeEntryToShared(challenge);
+    pendingChallengeCode = null;
+    selectedDifficulty = challenge.difficulty;
+    leaderboardDifficulty = challenge.difficulty;
+    updateDifficultyUi();
+    applyChallengeIntro();
+  } finally {
+    refs.startButton.disabled = false;
+    refs.startButton.removeAttribute("aria-busy");
+  }
+}
+
+function challengeEntryToShared(challenge: ChallengeEntry): SharedChallenge {
+  return {
+    v: 1,
+    code: challenge.code,
+    name: challenge.creatorName,
+    score: challenge.creatorScore,
+    difficulty: challenge.difficulty,
+    prompts: challenge.prompts,
+  };
 }
 
 async function refreshCategoryOptions(): Promise<void> {
@@ -1018,19 +1209,25 @@ function pickerValueText(): string {
     return `H${pickerHsb[0]} S${pickerHsb[1]} B${pickerHsb[2]}`;
   }
 
-  if (selectedDifficulty === "hard") return "adjust by sight";
-  return "no readout";
+  return "";
 }
 
 function showPickerChannel(channel: "h" | "s" | "b"): void {
   if (pickerValueHideTimer) window.clearTimeout(pickerValueHideTimer);
+  if (selectedDifficulty === "brutal") {
+    refs.pickerValueLabel.textContent = "";
+    refs.pickerValues.textContent = "";
+    refs.pickerValues.parentElement?.classList.remove("active");
+    return;
+  }
+
   const channelLabels = {
     h: "HUE",
     s: "SATURATION",
     b: "BRIGHTNESS",
   };
   refs.pickerValueLabel.textContent = channelLabels[channel];
-  refs.pickerValues.textContent = "";
+  refs.pickerValues.textContent = pickerValueText();
   refs.pickerValues.parentElement?.classList.add("active");
 }
 
@@ -1069,6 +1266,104 @@ function totalMessage(total: number): string {
 
 function totalScore(): number {
   return results.reduce((sum, result) => sum + result.score, 0);
+}
+
+function currentScoreRounds(): ScoreRound[] {
+  return results.map((result) => ({
+    promptId: result.prompt.id,
+    promptName: result.prompt.name,
+    picked: [...result.picked],
+    target: [...result.prompt.targetHsb],
+    score: Number(result.score.toFixed(2)),
+  }));
+}
+
+function formatPlayerName(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .toUpperCase()
+    .slice(0, 4);
+}
+
+async function copyText(value: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(value);
+    return true;
+  } catch {
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = value;
+      textarea.style.cssText = "position:fixed;opacity:0;pointer-events:none";
+      document.body.append(textarea);
+      textarea.focus();
+      textarea.select();
+      const copied = document.execCommand("copy");
+      textarea.remove();
+      return copied;
+    } catch {
+      return false;
+    }
+  }
+}
+
+function readInlineSharedChallenge(): SharedChallenge | null {
+  const value = new URLSearchParams(window.location.search).get("c");
+  if (!value || isShortChallengeCode(value)) return null;
+
+  try {
+    const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      "=",
+    );
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    const parsed = JSON.parse(new TextDecoder().decode(bytes)) as Partial<SharedChallenge>;
+    if (!isSharedChallenge(parsed)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function readChallengeCode(): string | null {
+  const value = new URLSearchParams(window.location.search).get("c");
+  if (!value || !isShortChallengeCode(value)) return null;
+  return value.toUpperCase();
+}
+
+function isShortChallengeCode(value: string): boolean {
+  return /^[a-zA-Z0-9]{6,10}$/.test(value);
+}
+
+function isSharedChallenge(value: Partial<SharedChallenge>): value is SharedChallenge {
+  return (
+    value.v === 1 &&
+    typeof value.name === "string" &&
+    typeof value.score === "number" &&
+    (value.difficulty === "easy" ||
+      value.difficulty === "hard" ||
+      value.difficulty === "brutal") &&
+    Array.isArray(value.prompts) &&
+    value.prompts.length > 0 &&
+    value.prompts.length <= ROUND_COUNT &&
+    value.prompts.every(isChallengePrompt)
+  );
+}
+
+function isChallengePrompt(value: unknown): value is PromptItem {
+  if (!value || typeof value !== "object") return false;
+  const prompt = value as Partial<PromptItem>;
+  return (
+    typeof prompt.id === "string" &&
+    typeof prompt.name === "string" &&
+    typeof prompt.imageSrc === "string" &&
+    Array.isArray(prompt.targetHsb) &&
+    prompt.targetHsb.length === 3 &&
+    prompt.targetHsb.every((channel) => typeof channel === "number")
+  );
 }
 
 function shuffle<T>(items: T[]): T[] {

@@ -178,5 +178,50 @@
     "active": true,
     "sortOrder": 42,
     "createdAt": "2026-05-22T07:17:26.395Z"
+  },
+  {
+    "slug": "dick-vigarista",
+    "name": "Dick Vigarista",
+    "category": "Desenhos",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/dick-vigarista.png",
+    "targetHsb": [
+      259,
+      72,
+      31
+    ],
+    "active": true,
+    "sortOrder": 52,
+    "createdAt": "2026-05-22T17:57:19.475Z"
+  },
+  {
+    "slug": "dick-vigarista",
+    "name": "Dick Vigarista",
+    "category": "Desenhos",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/dick-vigarista.png",
+    "targetHsb": [
+      259,
+      72,
+      31
+    ],
+    "active": true,
+    "sortOrder": 53,
+    "createdAt": "2026-05-22T17:57:19.475Z"
+  },
+  {
+    "slug": "dick-vigarista",
+    "name": "Dick Vigarista",
+    "category": "Desenhos",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/dick-vigarista.png",
+    "targetHsb": [
+      259,
+      72,
+      31
+    ],
+    "active": true,
+    "sortOrder": 54,
+    "createdAt": "2026-05-22T17:57:19.475Z"
   }
 ]

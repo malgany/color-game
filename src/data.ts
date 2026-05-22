@@ -1,6 +1,5 @@
 import {
   difficultyLabels,
-  promptCatalog,
   type Difficulty,
   type PromptItem,
 } from "./catalog";
@@ -23,6 +22,15 @@ type ScoreRow = {
   player_name: string;
   total_score: number | string;
   difficulty: Difficulty;
+  created_at: string;
+};
+
+type ChallengeRow = {
+  code: string;
+  creator_name: string;
+  creator_score: number | string;
+  difficulty: Difficulty;
+  prompts: unknown;
   created_at: string;
 };
 
@@ -49,6 +57,30 @@ export type LeaderboardEntry = {
   createdAt: string;
 };
 
+export type ChallengeEntry = {
+  code: string;
+  creatorName: string;
+  creatorScore: number;
+  difficulty: Difficulty;
+  prompts: PromptItem[];
+  createdAt: string;
+};
+
+export type ChallengeSubmission = {
+  creatorName: string;
+  creatorScore: number;
+  difficulty: Difficulty;
+  prompts: PromptItem[];
+  rounds: ScoreRound[];
+};
+
+export type ChallengeScoreSubmission = {
+  challengeCode: string;
+  playerName: string;
+  totalScore: number;
+  rounds: ScoreRound[];
+};
+
 const LOCAL_SCORES_KEY = "color_game_local_scores";
 const GENERATED_PROMPTS_SRC = `${import.meta.env.BASE_URL}assets/prompts/generated/prompts.json`;
 
@@ -64,7 +96,7 @@ export async function loadPrompts(
     const { data, error } = await supabase
       .from("color_prompts")
       .select(
-        "slug,difficulty,name,image_src,target_h,target_s,target_b,sort_order",
+        "slug,difficulty,category,name,image_src,target_h,target_s,target_b,sort_order",
       )
       .eq("active", true)
       .eq("difficulty", difficulty)
@@ -85,14 +117,7 @@ export async function loadPrompts(
   const generatedPrompts = await loadGeneratedPrompts(difficulty);
   if (remotePrompts.length) return [...remotePrompts, ...generatedPrompts];
 
-  return [
-    ...promptCatalog.map((prompt) => ({
-      ...prompt,
-      imageSrc: withBaseAsset(prompt.imageSrc),
-      difficulty,
-    })),
-    ...generatedPrompts,
-  ];
+  return generatedPrompts;
 }
 
 export async function loadCategories(): Promise<string[]> {
@@ -135,6 +160,83 @@ export async function saveScore(
   return "local";
 }
 
+export async function createChallenge(
+  submission: ChallengeSubmission,
+): Promise<ChallengeEntry | null> {
+  if (!supabase) return null;
+
+  const creatorName = cleanPlayerName(submission.creatorName);
+  const prompts = submission.prompts.slice(0, 5).map(serializePrompt);
+  const rows = submission.rounds.slice(0, 5).map(serializeRound);
+
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const code = randomChallengeCode();
+    const payload = {
+      code,
+      creator_name: creatorName,
+      creator_score: Number(submission.creatorScore.toFixed(2)),
+      difficulty: submission.difficulty,
+      prompts,
+    };
+
+    const { data, error } = await supabase
+      .from("color_challenges")
+      .insert(payload)
+      .select("code,creator_name,creator_score,difficulty,prompts,created_at")
+      .single();
+
+    if (error) {
+      if (error.code === "23505") continue;
+      return null;
+    }
+
+    await saveChallengeScore({
+      challengeCode: code,
+      playerName: creatorName,
+      totalScore: submission.creatorScore,
+      rounds: rows,
+    });
+
+    return challengeRowToEntry(data as ChallengeRow);
+  }
+
+  return null;
+}
+
+export async function loadChallenge(
+  code: string,
+): Promise<ChallengeEntry | null> {
+  if (!supabase) return null;
+  const normalizedCode = normalizeChallengeCode(code);
+  if (!normalizedCode) return null;
+
+  const { data, error } = await supabase
+    .from("color_challenges")
+    .select("code,creator_name,creator_score,difficulty,prompts,created_at")
+    .eq("code", normalizedCode)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return challengeRowToEntry(data as ChallengeRow);
+}
+
+export async function saveChallengeScore(
+  submission: ChallengeScoreSubmission,
+): Promise<boolean> {
+  if (!supabase) return false;
+  const challengeCode = normalizeChallengeCode(submission.challengeCode);
+  if (!challengeCode) return false;
+
+  const { error } = await supabase.from("color_challenge_scores").insert({
+    challenge_code: challengeCode,
+    player_name: cleanPlayerName(submission.playerName),
+    total_score: Number(submission.totalScore.toFixed(2)),
+    rounds: submission.rounds.slice(0, 5).map(serializeRound),
+  });
+
+  return !error;
+}
+
 export async function loadLeaderboard(
   difficulty: Difficulty,
 ): Promise<LeaderboardEntry[]> {
@@ -154,6 +256,28 @@ export async function loadLeaderboard(
     .filter((entry) => entry.difficulty === difficulty)
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 20);
+}
+
+function challengeRowToEntry(row: ChallengeRow): ChallengeEntry | null {
+  if (!Array.isArray(row.prompts)) return null;
+  const prompts = row.prompts.filter(isChallengePrompt).map((prompt) => ({
+    id: prompt.id,
+    name: prompt.name,
+    imageSrc: withBaseAsset(prompt.imageSrc),
+    category: prompt.category,
+    targetHsb: prompt.targetHsb,
+    difficulty: prompt.difficulty,
+  }));
+  if (!prompts.length) return null;
+
+  return {
+    code: row.code,
+    creatorName: row.creator_name,
+    creatorScore: Number(row.creator_score),
+    difficulty: row.difficulty,
+    prompts,
+    createdAt: row.created_at,
+  };
 }
 
 function scoreRowToEntry(row: ScoreRow): LeaderboardEntry {
@@ -230,6 +354,67 @@ function isGeneratedPrompt(value: unknown): value is {
       prompt.difficulty === "hard" ||
       prompt.difficulty === "brutal")
   );
+}
+
+function isChallengePrompt(value: unknown): value is PromptItem {
+  if (!value || typeof value !== "object") return false;
+  const prompt = value as Partial<PromptItem>;
+  return (
+    typeof prompt.id === "string" &&
+    typeof prompt.name === "string" &&
+    typeof prompt.imageSrc === "string" &&
+    (typeof prompt.category === "string" || prompt.category === undefined) &&
+    Array.isArray(prompt.targetHsb) &&
+    prompt.targetHsb.length === 3 &&
+    prompt.targetHsb.every((channel) => typeof channel === "number") &&
+    (prompt.difficulty === "easy" ||
+      prompt.difficulty === "hard" ||
+      prompt.difficulty === "brutal")
+  );
+}
+
+function serializePrompt(prompt: PromptItem): PromptItem {
+  return {
+    id: prompt.id,
+    name: prompt.name,
+    imageSrc: stripGeneratedVersion(prompt.imageSrc),
+    category: prompt.category,
+    targetHsb: [...prompt.targetHsb],
+    difficulty: prompt.difficulty,
+  };
+}
+
+function serializeRound(round: ScoreRound): ScoreRound {
+  return {
+    promptId: round.promptId,
+    promptName: round.promptName,
+    picked: [...round.picked],
+    target: [...round.target],
+    score: Number(round.score.toFixed(2)),
+  };
+}
+
+function stripGeneratedVersion(imageSrc: string): string {
+  try {
+    const url = new URL(imageSrc, window.location.origin);
+    url.searchParams.delete("v");
+    if (url.origin === window.location.origin) {
+      return `${url.pathname}${url.search}${url.hash}`;
+    }
+    return url.toString();
+  } catch {
+    return imageSrc;
+  }
+}
+
+function randomChallengeCode(): string {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const values = crypto.getRandomValues(new Uint8Array(7));
+  return Array.from(values, (value) => alphabet[value % alphabet.length]).join("");
+}
+
+function normalizeChallengeCode(value: string): string {
+  return value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 10);
 }
 
 function withGeneratedVersion(imageSrc: string, createdAt?: string): string {

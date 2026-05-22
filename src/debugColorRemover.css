@@ -277,10 +277,10 @@
 }
 
 .debug-canvas-wrap {
-  display: grid;
-  place-items: center;
+  display: block;
   overflow: auto;
   padding: 18px;
+  cursor: grab;
   background-color: #fff;
   background-image:
     linear-gradient(45deg, #d8d8d8 25%, transparent 25%),
@@ -292,10 +292,17 @@
 }
 
 .debug-canvas-wrap canvas {
-  max-width: 100%;
-  max-height: calc(100vh - 68px);
+  display: block;
+  margin: auto;
+  max-width: none;
+  max-height: none;
   cursor: crosshair;
   box-shadow: 0 14px 38px rgba(0, 0, 0, 0.34);
+}
+
+.debug-canvas-wrap.is-panning {
+  cursor: grabbing;
+  user-select: none;
 }
 
 .debug-library-sidebar {

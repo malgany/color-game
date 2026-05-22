@@ -12,6 +12,14 @@ type CanvasPoint = {
   y: number;
 };
 
+type PanState = {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  scrollLeft: number;
+  scrollTop: number;
+} | null;
+
 type Difficulty = "easy" | "hard" | "brutal";
 
 type GeneratedPrompt = {
@@ -26,6 +34,9 @@ type GeneratedPrompt = {
 
 const MAX_IMAGE_SIDE = 1600;
 const GAME_IMAGE_SIZE = 1024;
+const MIN_CANVAS_ZOOM = 0.1;
+const MAX_CANVAS_ZOOM = 12;
+const CANVAS_ZOOM_STEP = 1.18;
 
 export function initDebugColorRemover(): void {
   const root = document.createElement("section");
@@ -166,6 +177,8 @@ export function initDebugColorRemover(): void {
   let undoStack: ImageData[] = [];
   let libraryPrompts: GeneratedPrompt[] = [];
   let selectedLibraryCategory = "";
+  let canvasZoom = 1;
+  let panState: PanState = null;
 
   const setMenuOpen = (isOpen: boolean) => {
     root.classList.toggle("is-menu-open", isOpen);
@@ -223,11 +236,61 @@ export function initDebugColorRemover(): void {
     currentImageData = cloneImageData(originalImageData);
     undoStack = [];
     selectedTarget = null;
+    canvasZoom = getInitialCanvasZoom();
+    applyCanvasZoom();
+    centerCanvasInView();
     colorText.textContent = "Clique na imagem";
     swatch.style.background = "transparent";
     targetHsbText.textContent = "Selecione uma cor";
     status.textContent = "Clique em uma area para remover uma regiao contigua.";
     updateButtons();
+  });
+
+  canvas.addEventListener(
+    "wheel",
+    (event) => {
+      if (!currentImageData) return;
+      event.preventDefault();
+
+      const nextZoom =
+        event.deltaY < 0
+          ? canvasZoom * CANVAS_ZOOM_STEP
+          : canvasZoom / CANVAS_ZOOM_STEP;
+      setCanvasZoom(nextZoom, event);
+    },
+    { passive: false },
+  );
+
+  canvasWrap.addEventListener("pointerdown", (event) => {
+    if (!currentImageData || event.button !== 0 || event.target === canvas) return;
+    panState = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      scrollLeft: canvasWrap.scrollLeft,
+      scrollTop: canvasWrap.scrollTop,
+    };
+    canvasWrap.setPointerCapture(event.pointerId);
+    canvasWrap.classList.add("is-panning");
+    event.preventDefault();
+  });
+
+  canvasWrap.addEventListener("pointermove", (event) => {
+    if (!panState || event.pointerId !== panState.pointerId) return;
+    canvasWrap.scrollLeft = panState.scrollLeft - (event.clientX - panState.startX);
+    canvasWrap.scrollTop = panState.scrollTop - (event.clientY - panState.startY);
+  });
+
+  canvasWrap.addEventListener("pointerup", (event) => {
+    if (panState?.pointerId !== event.pointerId) return;
+    panState = null;
+    canvasWrap.classList.remove("is-panning");
+  });
+
+  canvasWrap.addEventListener("pointercancel", (event) => {
+    if (panState?.pointerId !== event.pointerId) return;
+    panState = null;
+    canvasWrap.classList.remove("is-panning");
   });
 
   canvas.addEventListener("click", (event) => {
@@ -261,7 +324,20 @@ export function initDebugColorRemover(): void {
     updateButtons();
   });
 
-  undoButton.addEventListener("click", () => {
+  undoButton.addEventListener("click", undoLastRemoval);
+
+  document.addEventListener("keydown", (event) => {
+    const isUndoShortcut =
+      event.key.toLowerCase() === "z" && (event.ctrlKey || event.metaKey);
+    if (!isUndoShortcut || !root.classList.contains("is-open")) return;
+    if (isTextEditingElement(document.activeElement)) return;
+    if (undoButton.disabled) return;
+
+    event.preventDefault();
+    undoLastRemoval();
+  });
+
+  function undoLastRemoval(): void {
     const previous = undoStack.pop();
     if (!previous) return;
 
@@ -269,7 +345,7 @@ export function initDebugColorRemover(): void {
     ctx.putImageData(currentImageData, 0, 0);
     status.textContent = "Ultima remocao desfeita.";
     updateButtons();
-  });
+  }
 
   resetButton.addEventListener("click", () => {
     if (!originalImageData) return;
@@ -278,6 +354,9 @@ export function initDebugColorRemover(): void {
     ctx.putImageData(currentImageData, 0, 0);
     undoStack = [];
     selectedTarget = null;
+    canvasZoom = getInitialCanvasZoom();
+    applyCanvasZoom();
+    centerCanvasInView();
     colorText.textContent = "Clique na imagem";
     swatch.style.background = "transparent";
     targetHsbText.textContent = "Selecione uma cor";
@@ -358,6 +437,66 @@ export function initDebugColorRemover(): void {
     saveOpenButton.disabled = !hasImage || !selectedTarget;
   }
 
+  function setCanvasZoom(nextZoom: number, anchor?: MouseEvent): void {
+    const previousRect = canvas.getBoundingClientRect();
+    const previousScrollLeft = canvasWrap.scrollLeft;
+    const previousScrollTop = canvasWrap.scrollTop;
+    const anchorX = anchor ? anchor.clientX - previousRect.left : previousRect.width / 2;
+    const anchorY = anchor ? anchor.clientY - previousRect.top : previousRect.height / 2;
+    const ratioX = previousRect.width ? anchorX / previousRect.width : 0.5;
+    const ratioY = previousRect.height ? anchorY / previousRect.height : 0.5;
+
+    canvasZoom = Math.min(MAX_CANVAS_ZOOM, Math.max(MIN_CANVAS_ZOOM, nextZoom));
+    applyCanvasZoom();
+
+    const nextRect = canvas.getBoundingClientRect();
+    if (!anchor) {
+      centerCanvasInView();
+      return;
+    }
+
+    canvasWrap.scrollLeft =
+      previousScrollLeft + nextRect.width * ratioX - previousRect.width * ratioX;
+    canvasWrap.scrollTop =
+      previousScrollTop + nextRect.height * ratioY - previousRect.height * ratioY;
+  }
+
+  function applyCanvasZoom(): void {
+    if (!canvas.width || !canvas.height) {
+      canvas.style.removeProperty("width");
+      canvas.style.removeProperty("height");
+      canvas.style.removeProperty("margin");
+      return;
+    }
+
+    canvas.style.width = `${canvas.width * canvasZoom}px`;
+    canvas.style.height = `${canvas.height * canvasZoom}px`;
+    const availableHeight = Math.max(0, canvasWrap.clientHeight - 36);
+    const visualHeight = canvas.height * canvasZoom;
+    const verticalMargin = Math.max(0, (availableHeight - visualHeight) / 2);
+    canvas.style.margin = `${verticalMargin}px auto`;
+  }
+
+  function centerCanvasInView(): void {
+    window.requestAnimationFrame(() => {
+      canvasWrap.scrollLeft = Math.max(0, (canvasWrap.scrollWidth - canvasWrap.clientWidth) / 2);
+      canvasWrap.scrollTop = Math.max(0, (canvasWrap.scrollHeight - canvasWrap.clientHeight) / 2);
+    });
+  }
+
+  function getInitialCanvasZoom(): number {
+    if (!canvas.width || !canvas.height) return 1;
+
+    const horizontalPadding = 36;
+    const verticalPadding = 36;
+    const availableWidth = Math.max(1, canvasWrap.clientWidth - horizontalPadding);
+    const availableHeight = Math.max(1, canvasWrap.clientHeight - verticalPadding);
+    return Math.max(
+      MIN_CANVAS_ZOOM,
+      Math.min(1, availableWidth / canvas.width, availableHeight / canvas.height),
+    );
+  }
+
   function clearCurrentImage(): void {
     currentImageData = null;
     originalImageData = null;
@@ -367,6 +506,8 @@ export function initDebugColorRemover(): void {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     canvas.removeAttribute("width");
     canvas.removeAttribute("height");
+    canvasZoom = 1;
+    applyCanvasZoom();
     colorText.textContent = "Nenhuma";
     swatch.style.background = "transparent";
     targetHsbText.textContent = "Selecione uma cor";
@@ -535,6 +676,16 @@ export function initDebugColorRemover(): void {
         error instanceof Error ? error.message : "Nao foi possivel remover.";
     }
   }
+}
+
+function isTextEditingElement(element: Element | null): boolean {
+  if (element instanceof HTMLTextAreaElement) return true;
+  if (element instanceof HTMLInputElement) {
+    return ["", "email", "number", "password", "search", "tel", "text", "url"].includes(
+      element.type,
+    );
+  }
+  return element instanceof HTMLElement && element.isContentEditable;
 }
 
 function removeContiguousColor(options: {
