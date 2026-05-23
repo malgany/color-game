@@ -317,6 +317,45 @@ svg {
   color: #fff;
 }
 
+.intro-screen.has-challenge {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  row-gap: 16px;
+  padding-bottom: 30px;
+}
+
+.intro-screen.has-challenge h1 {
+  font-size: 78px;
+  line-height: 0.9;
+  letter-spacing: 0;
+}
+
+.intro-screen.has-challenge .intro-copy {
+  width: min(100%, 330px);
+  margin-top: 0;
+}
+
+.intro-screen.has-challenge .intro-copy p,
+.intro-screen.has-challenge .intro-copy strong {
+  margin-bottom: 10px;
+}
+
+.intro-screen.has-challenge .intro-copy p:last-of-type {
+  margin-bottom: 12px;
+}
+
+.intro-screen.has-challenge .intro-copy strong:last-child {
+  margin-bottom: 0;
+}
+
+.intro-screen.has-challenge .intro-challenge-board {
+  align-self: end;
+}
+
+.intro-screen.has-challenge .intro-actions {
+  position: static;
+}
+
 .ghost-orbit {
   position: absolute;
   top: 30px;
@@ -1092,10 +1131,15 @@ svg {
 }
 
 .intro-challenge-board {
+  width: 100%;
+}
+
+.intro-screen:not(.has-challenge) .intro-challenge-board {
   position: absolute;
   left: 30px;
   right: 30px;
   bottom: 100px;
+  width: auto;
 }
 
 .challenge-board-head,
@@ -1550,6 +1594,41 @@ body:not([data-screen="intro"]) .footer-links {
     color: #fff;
   }
 
+  .intro-screen.has-challenge {
+    grid-template-rows: auto auto 1fr auto;
+    row-gap: 22px;
+    min-height: var(--mobile-viewport-height);
+    padding: 96px 34px max(30px, env(safe-area-inset-bottom));
+  }
+
+  .intro-screen.has-challenge h1 {
+    font-size: min(78px, 21vw);
+    line-height: 0.9;
+    letter-spacing: 0;
+  }
+
+  .intro-screen.has-challenge .intro-copy {
+    align-self: start;
+    width: min(100%, 310px);
+    margin-top: 0;
+  }
+
+  .intro-screen.has-challenge .intro-copy p,
+  .intro-screen.has-challenge .intro-copy strong {
+    margin-bottom: 18px;
+    font-size: 22px;
+    line-height: 1.18;
+    letter-spacing: 0;
+  }
+
+  .intro-screen.has-challenge .intro-copy p:first-child {
+    margin-bottom: 22px;
+  }
+
+  .intro-screen.has-challenge .intro-copy strong:last-child {
+    margin-bottom: 0;
+  }
+
   .ghost-orbit {
     display: none;
   }
@@ -1564,6 +1643,20 @@ body:not([data-screen="intro"]) .footer-links {
     height: 34px;
     padding: 0 13px;
     font-size: 13px;
+  }
+
+  .intro-screen.has-challenge .intro-actions {
+    position: static;
+    align-self: end;
+    display: grid;
+    grid-template-columns: 64px minmax(0, max-content) minmax(0, max-content);
+    gap: 12px;
+    width: 100%;
+  }
+
+  .intro-screen.has-challenge .intro-text-button {
+    min-width: 0;
+    padding: 0 13px;
   }
 
   .category-screen,
@@ -1785,6 +1878,11 @@ body:not([data-screen="intro"]) .footer-links {
   }
 
   .intro-challenge-board {
+    align-self: end;
+    margin-bottom: 0;
+  }
+
+  .intro-screen:not(.has-challenge) .intro-challenge-board {
     bottom: 112px;
   }
 

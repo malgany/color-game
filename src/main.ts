@@ -1195,9 +1195,11 @@ function scoreCategories(): string[] {
 
 function applyChallengeIntro(): void {
   if (!activeChallenge) {
+    refs.introScreen.classList.remove("has-challenge");
     hideChallengeBoards();
     return;
   }
+  refs.introScreen.classList.add("has-challenge");
   const introCopy = document.querySelector<HTMLElement>(".intro-copy");
   if (introCopy) {
     const firstLine =
@@ -1918,6 +1920,7 @@ function challengeBoardEntries(): ChallengeScoreEntry[] {
 }
 
 function hideChallengeBoards(): void {
+  refs.introScreen.classList.remove("has-challenge");
   refs.challengeIntroBoard.hidden = true;
   refs.challengeIntroBoard.innerHTML = "";
   refs.challengeBoard.hidden = true;
