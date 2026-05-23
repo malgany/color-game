@@ -46,11 +46,20 @@ type SharedChallenge = {
   score: number | null;
   difficulty: Difficulty;
   prompts: PromptItem[];
+  isLocal?: boolean;
 };
 
 type ShareResult = {
   status: "native" | "copy" | "ready" | "failed";
   url?: string;
+};
+
+type LocalChallengePayload = {
+  v: 1;
+  name: string;
+  score: number | null;
+  difficulty: Difficulty;
+  prompts: PromptItem[];
 };
 
 type CompareDragState = {
@@ -100,6 +109,7 @@ let theme = readTheme();
 let muted = localStorage.getItem(STORAGE_MUTED) === "1";
 let activeChallenge: SharedChallenge | null = null;
 let pendingChallengeCode = readChallengeCode();
+let pendingLocalChallenge = readLocalChallenge();
 let challengeScores: ChallengeScoreEntry[] = [];
 let selectedDifficulty: Difficulty = DEFAULT_DIFFICULTY;
 let selectedCategory = localStorage.getItem(STORAGE_CATEGORY) || "all";
@@ -268,7 +278,7 @@ app.innerHTML = `
       <section id="multiplayerScreen" class="screen multiplayer-screen" aria-label="Multiplayer setup">
         <button id="multiplayerBack" class="mini-close soundable" type="button" aria-label="Back to intro">Close</button>
         <h2>multiplayer</h2>
-        <p>Create a short link first. Everyone who opens it plays the same five images and lands on the same board.</p>
+        <p>Create a challenge link first. Everyone who opens it plays the same five images and lands on the same board.</p>
         <form id="multiplayerForm" class="multiplayer-form">
           <input id="multiplayerNameInput" maxlength="4" autocomplete="nickname" placeholder="Name" aria-label="Name" autocapitalize="characters" spellcheck="false" />
           <button id="createMultiplayerButton" class="score-submit soundable" type="submit">Create and copy game link</button>
@@ -807,7 +817,7 @@ function showTotal(): void {
   baseScorePosted = false;
   challengeScorePosted = false;
   lastChallengeShareUrl = activeChallenge
-    ? buildChallengeUrl(activeChallenge.code).toString()
+    ? buildChallengeShareUrl(activeChallenge).toString()
     : undefined;
   refs.totalScore.textContent = total.toFixed(2);
   refs.totalMessage.textContent = activeChallenge
@@ -846,8 +856,8 @@ function showTotal(): void {
     ? "Post result & copy link"
     : "Post score & challenge a friend";
   refs.scoreSaveStatus.textContent = activeChallenge
-    ? "Post this result to the challenge and copy the same short link."
-    : "Post your score and copy a short challenge link.";
+    ? "Post this result to the challenge and copy the same link."
+    : "Post your score and copy a challenge link.";
   refs.scoreSaveStatus.dataset.state = "idle";
   hideChallengeLinkOutput();
   renderChallengeResult(total);
@@ -874,8 +884,8 @@ async function submitFinalScore(): Promise<void> {
       shared.status === "ready" ? "Link ready" : "Link copied";
     refs.scoreSaveStatus.textContent =
       shared.status === "ready"
-        ? "Clipboard blocked; short link is shown below."
-        : "Short challenge link copied.";
+        ? "Clipboard blocked; challenge link is shown below."
+        : "Challenge link copied.";
     refs.scoreSaveStatus.dataset.state = "success";
     if (shared.status === "ready") showChallengeLinkOutput(shared.url);
     else hideChallengeLinkOutput();
@@ -901,7 +911,7 @@ async function submitFinalScore(): Promise<void> {
       });
     baseScorePosted = true;
     const challengeSaved = challenge
-      ? challengeScorePosted || await saveChallengeScore({
+      ? challenge.isLocal || challengeScorePosted || await saveChallengeScore({
         challengeCode: challenge.code,
         playerName,
         totalScore: total,
@@ -913,7 +923,7 @@ async function submitFinalScore(): Promise<void> {
       if (challenge.score === null && playerName === challenge.name) {
         challenge.score = total;
       }
-      await refreshChallengeScores(challenge.code);
+      if (!challenge.isLocal) await refreshChallengeScores(challenge.code);
       renderChallengeResult(total);
       renderChallengeBoards("total");
     }
@@ -931,7 +941,7 @@ async function submitFinalScore(): Promise<void> {
       refs.saveScoreButton.textContent = "Couldn't copy";
       refs.saveScoreButton.style.background = "#333";
       refs.saveScoreButton.style.color = "#fff";
-      refs.scoreSaveStatus.textContent = `${saveLocation}${challengeLocation} Could not create a short challenge link.`;
+      refs.scoreSaveStatus.textContent = `${saveLocation}${challengeLocation} Could not create a challenge link.`;
       refs.scoreSaveStatus.dataset.state = "error";
     } else {
       refs.saveScoreButton.classList.add("copied");
@@ -945,8 +955,8 @@ async function submitFinalScore(): Promise<void> {
         shared.status === "native"
           ? `${saveLocation}${challengeLocation} Challenge opened for sharing.`
           : shared.status === "ready"
-            ? `${saveLocation}${challengeLocation} Clipboard blocked; short link is shown below.`
-            : `${saveLocation}${challengeLocation} Short challenge link copied.`;
+            ? `${saveLocation}${challengeLocation} Clipboard blocked; challenge link is shown below.`
+            : `${saveLocation}${challengeLocation} Challenge link copied.`;
       refs.scoreSaveStatus.dataset.state = "success";
       if (shared.status === "ready") {
         showChallengeLinkOutput(shared.url);
@@ -980,14 +990,24 @@ async function shareScoreChallenge(
   playerName: string,
 ): Promise<ShareResult> {
   const total = Number(totalScore().toFixed(2));
+  const prompts = results.map((result) => result.prompt);
   const challenge = await createChallenge({
     creatorName: playerName,
     creatorScore: total,
     difficulty: DEFAULT_DIFFICULTY,
-    prompts: results.map((result) => result.prompt),
+    prompts,
     rounds: currentScoreRounds(),
   });
-  if (!challenge) return { status: "failed" };
+  if (!challenge) {
+    const localChallenge = createLocalChallenge(
+      playerName,
+      total,
+      DEFAULT_DIFFICULTY,
+      prompts,
+    );
+    const shareUrl = buildChallengeShareUrl(localChallenge);
+    return shareChallengeLink(currentShareText(playerName, null), shareUrl);
+  }
 
   const shareUrl = buildChallengeUrl(challenge.code);
   return shareChallengeLink(currentShareText(playerName, null), shareUrl);
@@ -997,8 +1017,11 @@ async function shareExistingChallenge(
   playerName: string,
   challenge: SharedChallenge,
 ): Promise<ShareResult> {
-  const shareUrl = buildChallengeUrl(challenge.code);
-  return shareChallengeLink(currentShareText(playerName, challenge), shareUrl);
+  const shareUrl = buildChallengeShareUrl(challenge);
+  return shareChallengeLink(
+    currentShareText(playerName, challenge),
+    shareUrl,
+  );
 }
 
 function currentShareText(
@@ -1022,6 +1045,30 @@ function buildChallengeUrl(code: string): URL {
   shareUrl.search = "";
   shareUrl.hash = "";
   shareUrl.searchParams.set("c", code);
+  return shareUrl;
+}
+
+function buildChallengeShareUrl(challenge: SharedChallenge): URL {
+  if (challenge.isLocal) return buildLocalChallengeUrl(challenge);
+  return buildChallengeUrl(challenge.code);
+}
+
+function buildLocalChallengeUrl(challenge: SharedChallenge): URL {
+  const shareUrl = new URL(window.location.href);
+  shareUrl.search = "";
+  shareUrl.hash = "";
+  shareUrl.searchParams.set(
+    "lc",
+    encodeBase64Url(
+      JSON.stringify({
+        v: 1,
+        name: challenge.name,
+        score: challenge.score,
+        difficulty: challenge.difficulty,
+        prompts: challenge.prompts,
+      } satisfies LocalChallengePayload),
+    ),
+  );
   return shareUrl;
 }
 
@@ -1176,9 +1223,12 @@ function applyChallengeIntro(): void {
         : `<strong>${escapeHtml(activeChallenge.name)}</strong> scored ${activeChallenge.score.toFixed(
           2,
         )}/50.`;
+    const detailLine = activeChallenge.isLocal
+      ? "Same images. Same colors. This link carries the original challenge."
+      : "Same images. Same colors. Every posted result stays on this link.";
     introCopy.innerHTML = `
       <p>${firstLine}</p>
-      <p>Same images. Same colors. Every posted result stays on this link.</p>
+      <p>${detailLine}</p>
       <strong>Ready?</strong>
     `;
   }
@@ -1187,20 +1237,33 @@ function applyChallengeIntro(): void {
 }
 
 async function loadPendingChallenge(): Promise<void> {
-  if (!pendingChallengeCode) return;
+  if (!pendingChallengeCode && !pendingLocalChallenge) return;
 
   refs.startButton.disabled = true;
   refs.startButton.setAttribute("aria-busy", "true");
   const introCopy = document.querySelector<HTMLElement>(".intro-copy");
   if (introCopy) {
+    const challengeLabel = pendingChallengeCode || "shared";
     introCopy.innerHTML = `
-      <p>Loading challenge ${escapeHtml(pendingChallengeCode)}...</p>
+      <p>Loading challenge ${escapeHtml(challengeLabel)}...</p>
       <p>Fetching the same images and target colors.</p>
       <strong>One moment.</strong>
     `;
   }
 
   try {
+    if (pendingLocalChallenge) {
+      activeChallenge = pendingLocalChallenge;
+      pendingLocalChallenge = null;
+      pendingChallengeCode = null;
+      challengeScores = [];
+      selectedDifficulty = DEFAULT_DIFFICULTY;
+      updateRunUi();
+      applyChallengeIntro();
+      return;
+    }
+
+    if (!pendingChallengeCode) return;
     const challenge = await loadChallenge(pendingChallengeCode);
     if (!challenge) {
       pendingChallengeCode = null;
@@ -1242,6 +1305,48 @@ function challengeEntryToShared(challenge: ChallengeEntry): SharedChallenge {
   };
 }
 
+function createLocalChallenge(
+  name: string,
+  score: number | null,
+  difficulty: Difficulty,
+  prompts: PromptItem[],
+): SharedChallenge {
+  const challengePrompts = prompts.slice(0, ROUND_COUNT).map((prompt) => ({
+    id: prompt.id,
+    name: prompt.name,
+    imageSrc: prompt.imageSrc,
+    category: prompt.category,
+    targetHsb: [...prompt.targetHsb] as HsbColor,
+    difficulty: prompt.difficulty || difficulty,
+  }));
+
+  return {
+    code: localChallengeCode(name, score, challengePrompts),
+    name,
+    score,
+    difficulty,
+    prompts: challengePrompts,
+    isLocal: true,
+  };
+}
+
+function localChallengeCode(
+  name: string,
+  score: number | null,
+  prompts: PromptItem[],
+): string {
+  const source = JSON.stringify({
+    name,
+    score,
+    prompts: prompts.map((prompt) => [prompt.id, prompt.targetHsb]),
+  });
+  let hash = 0;
+  for (let index = 0; index < source.length; index += 1) {
+    hash = (hash * 31 + source.charCodeAt(index)) >>> 0;
+  }
+  return `L${hash.toString(36).toUpperCase().padStart(6, "0")}`.slice(0, 10);
+}
+
 function hydrateChallengeCreatorScore(): void {
   const challenge = activeChallenge;
   if (!challenge || challenge.score !== null) return;
@@ -1277,7 +1382,7 @@ function openMultiplayerSetup(): void {
     : "Create and copy game link";
   refs.createMultiplayerButton.disabled = false;
   refs.multiplayerStatus.textContent = activeChallenge
-    ? "Short link is ready. Start when you are ready."
+    ? "Challenge link is ready. Start when you are ready."
     : "This creates the shared link before anyone plays.";
   refs.multiplayerStatus.dataset.state = "idle";
   hideMultiplayerLinkOutput();
@@ -1306,13 +1411,14 @@ async function submitMultiplayerSetup(): Promise<void> {
       difficulty: DEFAULT_DIFFICULTY,
       prompts,
     });
-    if (!challenge) throw new Error("challenge create failed");
 
-    activeChallenge = challengeEntryToShared(challenge);
+    activeChallenge = challenge
+      ? challengeEntryToShared(challenge)
+      : createLocalChallenge(creatorName, null, DEFAULT_DIFFICULTY, prompts);
     challengeScores = [];
     localStorage.setItem(STORAGE_PLAYER_NAME, creatorName);
     leaderboardCategory = scoreCategoryLabel();
-    lastChallengeShareUrl = buildChallengeUrl(challenge.code).toString();
+    lastChallengeShareUrl = buildChallengeShareUrl(activeChallenge).toString();
     updateRunUi();
     applyChallengeIntro();
 
@@ -1323,10 +1429,10 @@ async function submitMultiplayerSetup(): Promise<void> {
     showMultiplayerLinkOutput(shared.url || lastChallengeShareUrl);
     refs.multiplayerStatus.textContent =
       shared.status === "copy"
-        ? "Short multiplayer link copied."
+        ? "Multiplayer link copied."
         : shared.status === "native"
           ? "Challenge opened for sharing."
-          : "Short multiplayer link is ready below.";
+          : "Multiplayer link is ready below.";
     refs.multiplayerStatus.dataset.state = "success";
     refs.createMultiplayerButton.textContent = "Start playing";
   } catch {
@@ -1842,7 +1948,7 @@ function showChallengeLinkOutput(url?: string): void {
 
   refs.challengeLinkOutput.hidden = false;
   refs.challengeLinkOutput.innerHTML = `
-    <span>Short link</span>
+    <span>Challenge link</span>
     <a href="${escapeHtml(url)}">${escapeHtml(url)}</a>
   `;
 }
@@ -1860,7 +1966,7 @@ function showMultiplayerLinkOutput(url?: string): void {
 
   refs.multiplayerLinkOutput.hidden = false;
   refs.multiplayerLinkOutput.innerHTML = `
-    <span>Short link</span>
+    <span>Challenge link</span>
     <a href="${escapeHtml(url)}">${escapeHtml(url)}</a>
   `;
 }
@@ -1931,6 +2037,74 @@ function readChallengeCode(): string | null {
   const value = new URLSearchParams(window.location.search).get("c");
   if (!value || !isShortChallengeCode(value)) return null;
   return value.toUpperCase();
+}
+
+function readLocalChallenge(): SharedChallenge | null {
+  const value = new URLSearchParams(window.location.search).get("lc");
+  if (!value) return null;
+
+  try {
+    const payload = JSON.parse(decodeBase64Url(value)) as unknown;
+    return localChallengePayloadToShared(payload);
+  } catch {
+    return null;
+  }
+}
+
+function localChallengePayloadToShared(value: unknown): SharedChallenge | null {
+  if (!value || typeof value !== "object") return null;
+  const payload = value as Partial<LocalChallengePayload>;
+  if (payload.v !== 1) return null;
+  if (typeof payload.name !== "string") return null;
+  if (!(payload.score === null || typeof payload.score === "number")) return null;
+  if (!isDifficulty(payload.difficulty)) return null;
+  if (!Array.isArray(payload.prompts)) return null;
+
+  const prompts = payload.prompts.filter(isLocalChallengePrompt).slice(0, ROUND_COUNT);
+  if (!prompts.length) return null;
+
+  return createLocalChallenge(
+    formatPlayerName(payload.name) || "PLAY",
+    payload.score === null ? null : Number(payload.score.toFixed(2)),
+    payload.difficulty,
+    prompts,
+  );
+}
+
+function isLocalChallengePrompt(value: unknown): value is PromptItem {
+  if (!value || typeof value !== "object") return false;
+  const prompt = value as Partial<PromptItem>;
+  return (
+    typeof prompt.id === "string" &&
+    typeof prompt.name === "string" &&
+    typeof prompt.imageSrc === "string" &&
+    (typeof prompt.category === "string" || prompt.category === undefined) &&
+    Array.isArray(prompt.targetHsb) &&
+    prompt.targetHsb.length === 3 &&
+    prompt.targetHsb.every((channel) => typeof channel === "number") &&
+    isDifficulty(prompt.difficulty)
+  );
+}
+
+function isDifficulty(value: unknown): value is Difficulty {
+  return value === "easy" || value === "hard" || value === "brutal";
+}
+
+function encodeBase64Url(value: string): string {
+  const bytes = new TextEncoder().encode(value);
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function decodeBase64Url(value: string): string {
+  const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+  const binary = atob(padded);
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
 }
 
 function isShortChallengeCode(value: string): boolean {
