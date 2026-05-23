@@ -58,6 +58,9 @@ create table if not exists public.color_challenge_scores (
   created_at timestamptz not null default now()
 );
 
+alter table public.color_challenge_scores
+  add column if not exists edit_token text;
+
 create index if not exists color_prompts_difficulty_active_sort_idx
   on public.color_prompts (difficulty, active, sort_order);
 
@@ -155,6 +158,33 @@ create policy "Players can submit color challenge scores"
     and jsonb_typeof(rounds) = 'array'
     and jsonb_array_length(rounds) between 1 and 5
   );
+
+create or replace function public.update_challenge_score_name(
+  score_id uuid,
+  score_edit_token text,
+  new_player_name text
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  updated_count integer;
+begin
+  update public.color_challenge_scores
+  set player_name = trim(new_player_name)
+  where id = score_id
+    and edit_token = score_edit_token
+    and char_length(trim(new_player_name)) between 1 and 24;
+
+  get diagnostics updated_count = row_count;
+  return updated_count = 1;
+end;
+$$;
+
+revoke all on function public.update_challenge_score_name(uuid, text, text) from public;
+grant execute on function public.update_challenge_score_name(uuid, text, text) to anon, authenticated;
 
 delete from public.color_prompts
 where category = 'general'

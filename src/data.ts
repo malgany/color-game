@@ -97,6 +97,11 @@ export type ChallengeScoreEntry = {
   createdAt: string;
 };
 
+export type ChallengeScoreDraft = {
+  entry: ChallengeScoreEntry;
+  editToken: string;
+};
+
 const LOCAL_SCORES_KEY = "color_game_local_scores";
 const GENERATED_PROMPTS_SRC = `${import.meta.env.BASE_URL}assets/prompts/generated/prompts.json`;
 
@@ -274,6 +279,68 @@ export async function saveChallengeScore(
   });
 
   return !error;
+}
+
+export async function saveChallengeScoreDraft(
+  submission: ChallengeScoreSubmission,
+): Promise<ChallengeScoreDraft | null> {
+  if (!supabase) return null;
+  const challengeCode = normalizeChallengeCode(submission.challengeCode);
+  if (!challengeCode) return null;
+
+  const editToken = randomEditToken();
+  const { data, error } = await supabase
+    .from("color_challenge_scores")
+    .insert({
+      challenge_code: challengeCode,
+      player_name: cleanPlayerName(submission.playerName),
+      total_score: Number(submission.totalScore.toFixed(2)),
+      rounds: submission.rounds.slice(0, 5).map(serializeRound),
+      edit_token: editToken,
+    })
+    .select("id,player_name,total_score,created_at")
+    .single();
+
+  if (error || !data) {
+    const { data: legacyData, error: legacyError } = await supabase
+      .from("color_challenge_scores")
+      .insert({
+        challenge_code: challengeCode,
+        player_name: cleanPlayerName(submission.playerName),
+        total_score: Number(submission.totalScore.toFixed(2)),
+        rounds: submission.rounds.slice(0, 5).map(serializeRound),
+      })
+      .select("id,player_name,total_score,created_at")
+      .single();
+
+    if (legacyError || !legacyData) return null;
+
+    return {
+      entry: challengeScoreRowToEntry(legacyData as ChallengeScoreRow),
+      editToken: "",
+    };
+  }
+
+  return {
+    entry: challengeScoreRowToEntry(data as ChallengeScoreRow),
+    editToken,
+  };
+}
+
+export async function updateChallengeScoreName(
+  scoreId: string,
+  editToken: string,
+  playerName: string,
+): Promise<boolean> {
+  if (!supabase || !scoreId || !editToken) return false;
+
+  const { data, error } = await supabase.rpc("update_challenge_score_name", {
+    score_id: scoreId,
+    score_edit_token: editToken,
+    new_player_name: cleanPlayerName(playerName),
+  });
+
+  return !error && data === true;
 }
 
 export async function loadChallengeScores(
@@ -486,6 +553,11 @@ function randomChallengeCode(): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const values = crypto.getRandomValues(new Uint8Array(7));
   return Array.from(values, (value) => alphabet[value % alphabet.length]).join("");
+}
+
+function randomEditToken(): string {
+  const values = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(values, (value) => value.toString(16).padStart(2, "0")).join("");
 }
 
 function normalizeChallengeCode(value: string): string {

@@ -4,7 +4,7 @@
     "name": "A Pantera Cor-de-Rosa",
     "category": "Desenhos",
     "difficulty": "easy",
-    "imageSrc": "/assets/prompts/generated/a-pantera-cor-de-rosa.png",
+    "imageSrc": "/assets/prompts/generated/a-pantera-cor-de-rosa.webp",
     "targetHsb": [
       346,
       34,
@@ -19,7 +19,7 @@
     "name": "A Pantera Cor-de-Rosa",
     "category": "Desenhos",
     "difficulty": "hard",
-    "imageSrc": "/assets/prompts/generated/a-pantera-cor-de-rosa.png",
+    "imageSrc": "/assets/prompts/generated/a-pantera-cor-de-rosa.webp",
     "targetHsb": [
       346,
       34,
@@ -34,7 +34,7 @@
     "name": "A Pantera Cor-de-Rosa",
     "category": "Desenhos",
     "difficulty": "brutal",
-    "imageSrc": "/assets/prompts/generated/a-pantera-cor-de-rosa.png",
+    "imageSrc": "/assets/prompts/generated/a-pantera-cor-de-rosa.webp",
     "targetHsb": [
       346,
       34,
@@ -49,7 +49,7 @@
     "name": "Pica-pau",
     "category": "Desenhos",
     "difficulty": "easy",
-    "imageSrc": "/assets/prompts/generated/pica-pau.png",
+    "imageSrc": "/assets/prompts/generated/pica-pau.webp",
     "targetHsb": [
       218,
       65,
@@ -64,7 +64,7 @@
     "name": "Pica-pau",
     "category": "Desenhos",
     "difficulty": "hard",
-    "imageSrc": "/assets/prompts/generated/pica-pau.png",
+    "imageSrc": "/assets/prompts/generated/pica-pau.webp",
     "targetHsb": [
       218,
       65,
@@ -79,7 +79,7 @@
     "name": "Pica-pau",
     "category": "Desenhos",
     "difficulty": "brutal",
-    "imageSrc": "/assets/prompts/generated/pica-pau.png",
+    "imageSrc": "/assets/prompts/generated/pica-pau.webp",
     "targetHsb": [
       218,
       65,
@@ -94,7 +94,7 @@
     "name": "Tom and Jerry",
     "category": "Desenhos",
     "difficulty": "easy",
-    "imageSrc": "/assets/prompts/generated/tom-and-jerry.png",
+    "imageSrc": "/assets/prompts/generated/tom-and-jerry.webp",
     "targetHsb": [
       211,
       75,
@@ -109,7 +109,7 @@
     "name": "Tom and Jerry",
     "category": "Desenhos",
     "difficulty": "hard",
-    "imageSrc": "/assets/prompts/generated/tom-and-jerry.png",
+    "imageSrc": "/assets/prompts/generated/tom-and-jerry.webp",
     "targetHsb": [
       211,
       75,
@@ -124,7 +124,7 @@
     "name": "Tom and Jerry",
     "category": "Desenhos",
     "difficulty": "brutal",
-    "imageSrc": "/assets/prompts/generated/tom-and-jerry.png",
+    "imageSrc": "/assets/prompts/generated/tom-and-jerry.webp",
     "targetHsb": [
       211,
       75,
@@ -139,7 +139,7 @@
     "name": "Os Flintstones",
     "category": "Desenhos",
     "difficulty": "easy",
-    "imageSrc": "/assets/prompts/generated/os-flintstones.png",
+    "imageSrc": "/assets/prompts/generated/os-flintstones.webp",
     "targetHsb": [
       28,
       86,
@@ -154,7 +154,7 @@
     "name": "Os Flintstones",
     "category": "Desenhos",
     "difficulty": "hard",
-    "imageSrc": "/assets/prompts/generated/os-flintstones.png",
+    "imageSrc": "/assets/prompts/generated/os-flintstones.webp",
     "targetHsb": [
       28,
       86,
@@ -169,7 +169,7 @@
     "name": "Os Flintstones",
     "category": "Desenhos",
     "difficulty": "brutal",
-    "imageSrc": "/assets/prompts/generated/os-flintstones.png",
+    "imageSrc": "/assets/prompts/generated/os-flintstones.webp",
     "targetHsb": [
       28,
       86,
@@ -184,7 +184,7 @@
     "name": "Dick Vigarista",
     "category": "Desenhos",
     "difficulty": "easy",
-    "imageSrc": "/assets/prompts/generated/dick-vigarista.png",
+    "imageSrc": "/assets/prompts/generated/dick-vigarista.webp",
     "targetHsb": [
       259,
       72,
@@ -199,7 +199,7 @@
     "name": "Dick Vigarista",
     "category": "Desenhos",
     "difficulty": "hard",
-    "imageSrc": "/assets/prompts/generated/dick-vigarista.png",
+    "imageSrc": "/assets/prompts/generated/dick-vigarista.webp",
     "targetHsb": [
       259,
       72,
@@ -214,7 +214,7 @@
     "name": "Dick Vigarista",
     "category": "Desenhos",
     "difficulty": "brutal",
-    "imageSrc": "/assets/prompts/generated/dick-vigarista.png",
+    "imageSrc": "/assets/prompts/generated/dick-vigarista.webp",
     "targetHsb": [
       259,
       72,
@@ -229,7 +229,7 @@
     "name": "Marvin the Martian",
     "category": "Desenhos",
     "difficulty": "easy",
-    "imageSrc": "/assets/prompts/generated/marvin-the-martian.png",
+    "imageSrc": "/assets/prompts/generated/marvin-the-martian.webp",
     "targetHsb": [
       120,
       99,
@@ -244,7 +244,7 @@
     "name": "Marvin the Martian",
     "category": "Desenhos",
     "difficulty": "hard",
-    "imageSrc": "/assets/prompts/generated/marvin-the-martian.png",
+    "imageSrc": "/assets/prompts/generated/marvin-the-martian.webp",
     "targetHsb": [
       120,
       99,
@@ -259,7 +259,7 @@
     "name": "Marvin the Martian",
     "category": "Desenhos",
     "difficulty": "brutal",
-    "imageSrc": "/assets/prompts/generated/marvin-the-martian.png",
+    "imageSrc": "/assets/prompts/generated/marvin-the-martian.webp",
     "targetHsb": [
       120,
       99,
@@ -274,7 +274,7 @@
     "name": "Zé Jacaré",
     "category": "Desenhos",
     "difficulty": "easy",
-    "imageSrc": "/assets/prompts/generated/ze-jacare.png",
+    "imageSrc": "/assets/prompts/generated/ze-jacare.webp",
     "targetHsb": [
       53,
       29,
@@ -289,7 +289,7 @@
     "name": "Zé Jacaré",
     "category": "Desenhos",
     "difficulty": "hard",
-    "imageSrc": "/assets/prompts/generated/ze-jacare.png",
+    "imageSrc": "/assets/prompts/generated/ze-jacare.webp",
     "targetHsb": [
       53,
       29,
@@ -304,7 +304,7 @@
     "name": "Zé Jacaré",
     "category": "Desenhos",
     "difficulty": "brutal",
-    "imageSrc": "/assets/prompts/generated/ze-jacare.png",
+    "imageSrc": "/assets/prompts/generated/ze-jacare.webp",
     "targetHsb": [
       53,
       29,
@@ -319,7 +319,7 @@
     "name": "Charmander",
     "category": "Pokemon",
     "difficulty": "easy",
-    "imageSrc": "/assets/prompts/generated/charmander.png",
+    "imageSrc": "/assets/prompts/generated/charmander.webp",
     "targetHsb": [
       23,
       97,
@@ -334,7 +334,7 @@
     "name": "Charmander",
     "category": "Pokemon",
     "difficulty": "hard",
-    "imageSrc": "/assets/prompts/generated/charmander.png",
+    "imageSrc": "/assets/prompts/generated/charmander.webp",
     "targetHsb": [
       23,
       97,
@@ -349,7 +349,7 @@
     "name": "Charmander",
     "category": "Pokemon",
     "difficulty": "brutal",
-    "imageSrc": "/assets/prompts/generated/charmander.png",
+    "imageSrc": "/assets/prompts/generated/charmander.webp",
     "targetHsb": [
       23,
       97,
@@ -364,7 +364,7 @@
     "name": "Meowth",
     "category": "Pokemon",
     "difficulty": "easy",
-    "imageSrc": "/assets/prompts/generated/meowth.png",
+    "imageSrc": "/assets/prompts/generated/meowth.webp",
     "targetHsb": [
       42,
       23,
@@ -379,7 +379,7 @@
     "name": "Meowth",
     "category": "Pokemon",
     "difficulty": "hard",
-    "imageSrc": "/assets/prompts/generated/meowth.png",
+    "imageSrc": "/assets/prompts/generated/meowth.webp",
     "targetHsb": [
       42,
       23,
@@ -394,7 +394,7 @@
     "name": "Meowth",
     "category": "Pokemon",
     "difficulty": "brutal",
-    "imageSrc": "/assets/prompts/generated/meowth.png",
+    "imageSrc": "/assets/prompts/generated/meowth.webp",
     "targetHsb": [
       42,
       23,
@@ -409,7 +409,7 @@
     "name": "Dragonite",
     "category": "Pokemon",
     "difficulty": "easy",
-    "imageSrc": "/assets/prompts/generated/dragonite.png",
+    "imageSrc": "/assets/prompts/generated/dragonite.webp",
     "targetHsb": [
       173,
       72,
@@ -424,7 +424,7 @@
     "name": "Dragonite",
     "category": "Pokemon",
     "difficulty": "hard",
-    "imageSrc": "/assets/prompts/generated/dragonite.png",
+    "imageSrc": "/assets/prompts/generated/dragonite.webp",
     "targetHsb": [
       173,
       72,
@@ -439,7 +439,7 @@
     "name": "Dragonite",
     "category": "Pokemon",
     "difficulty": "brutal",
-    "imageSrc": "/assets/prompts/generated/dragonite.png",
+    "imageSrc": "/assets/prompts/generated/dragonite.webp",
     "targetHsb": [
       173,
       72,
@@ -454,7 +454,7 @@
     "name": "Ash",
     "category": "Pokemon",
     "difficulty": "easy",
-    "imageSrc": "/assets/prompts/generated/ash.png",
+    "imageSrc": "/assets/prompts/generated/ash.webp",
     "targetHsb": [
       227,
       67,
@@ -469,7 +469,7 @@
     "name": "Ash",
     "category": "Pokemon",
     "difficulty": "hard",
-    "imageSrc": "/assets/prompts/generated/ash.png",
+    "imageSrc": "/assets/prompts/generated/ash.webp",
     "targetHsb": [
       227,
       67,
@@ -484,7 +484,7 @@
     "name": "Ash",
     "category": "Pokemon",
     "difficulty": "brutal",
-    "imageSrc": "/assets/prompts/generated/ash.png",
+    "imageSrc": "/assets/prompts/generated/ash.webp",
     "targetHsb": [
       227,
       67,
@@ -499,7 +499,7 @@
     "name": "Pikachu",
     "category": "Pokemon",
     "difficulty": "easy",
-    "imageSrc": "/assets/prompts/generated/pikachu.png",
+    "imageSrc": "/assets/prompts/generated/pikachu.webp",
     "targetHsb": [
       50,
       90,
@@ -514,7 +514,7 @@
     "name": "Pikachu",
     "category": "Pokemon",
     "difficulty": "hard",
-    "imageSrc": "/assets/prompts/generated/pikachu.png",
+    "imageSrc": "/assets/prompts/generated/pikachu.webp",
     "targetHsb": [
       50,
       90,
@@ -529,7 +529,7 @@
     "name": "Pikachu",
     "category": "Pokemon",
     "difficulty": "brutal",
-    "imageSrc": "/assets/prompts/generated/pikachu.png",
+    "imageSrc": "/assets/prompts/generated/pikachu.webp",
     "targetHsb": [
       50,
       90,
@@ -544,7 +544,7 @@
     "name": "Equipe Rocket",
     "category": "Pokemon",
     "difficulty": "easy",
-    "imageSrc": "/assets/prompts/generated/equipe-rocket.png",
+    "imageSrc": "/assets/prompts/generated/equipe-rocket.webp",
     "targetHsb": [
       347,
       71,
@@ -559,7 +559,7 @@
     "name": "Equipe Rocket",
     "category": "Pokemon",
     "difficulty": "hard",
-    "imageSrc": "/assets/prompts/generated/equipe-rocket.png",
+    "imageSrc": "/assets/prompts/generated/equipe-rocket.webp",
     "targetHsb": [
       347,
       71,
@@ -574,7 +574,7 @@
     "name": "Equipe Rocket",
     "category": "Pokemon",
     "difficulty": "brutal",
-    "imageSrc": "/assets/prompts/generated/equipe-rocket.png",
+    "imageSrc": "/assets/prompts/generated/equipe-rocket.webp",
     "targetHsb": [
       347,
       71,
@@ -589,7 +589,7 @@
     "name": "Dick Vigarista 2",
     "category": "Desenhos",
     "difficulty": "easy",
-    "imageSrc": "/assets/prompts/generated/dick-vigarista-2.png",
+    "imageSrc": "/assets/prompts/generated/dick-vigarista-2.webp",
     "targetHsb": [
       359,
       100,
@@ -604,7 +604,7 @@
     "name": "Dick Vigarista 2",
     "category": "Desenhos",
     "difficulty": "hard",
-    "imageSrc": "/assets/prompts/generated/dick-vigarista-2.png",
+    "imageSrc": "/assets/prompts/generated/dick-vigarista-2.webp",
     "targetHsb": [
       359,
       100,
@@ -619,7 +619,7 @@
     "name": "Dick Vigarista 2",
     "category": "Desenhos",
     "difficulty": "brutal",
-    "imageSrc": "/assets/prompts/generated/dick-vigarista-2.png",
+    "imageSrc": "/assets/prompts/generated/dick-vigarista-2.webp",
     "targetHsb": [
       359,
       100,
@@ -628,5 +628,275 @@
     "active": true,
     "sortOrder": 162,
     "createdAt": "2026-05-22T21:17:29.925Z"
+  },
+  {
+    "slug": "goku",
+    "name": "Goku",
+    "category": "DBZ",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/goku.webp",
+    "targetHsb": [
+      19,
+      91,
+      100
+    ],
+    "active": true,
+    "sortOrder": 172,
+    "createdAt": "2026-05-23T19:37:25.401Z"
+  },
+  {
+    "slug": "goku",
+    "name": "Goku",
+    "category": "DBZ",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/goku.webp",
+    "targetHsb": [
+      19,
+      91,
+      100
+    ],
+    "active": true,
+    "sortOrder": 173,
+    "createdAt": "2026-05-23T19:37:25.401Z"
+  },
+  {
+    "slug": "goku",
+    "name": "Goku",
+    "category": "DBZ",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/goku.webp",
+    "targetHsb": [
+      19,
+      91,
+      100
+    ],
+    "active": true,
+    "sortOrder": 174,
+    "createdAt": "2026-05-23T19:37:25.401Z"
+  },
+  {
+    "slug": "vegeta",
+    "name": "Vegeta",
+    "category": "DBZ",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/vegeta.webp",
+    "targetHsb": [
+      225,
+      61,
+      88
+    ],
+    "active": true,
+    "sortOrder": 184,
+    "createdAt": "2026-05-23T19:38:08.154Z"
+  },
+  {
+    "slug": "vegeta",
+    "name": "Vegeta",
+    "category": "DBZ",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/vegeta.webp",
+    "targetHsb": [
+      225,
+      61,
+      88
+    ],
+    "active": true,
+    "sortOrder": 185,
+    "createdAt": "2026-05-23T19:38:08.154Z"
+  },
+  {
+    "slug": "vegeta",
+    "name": "Vegeta",
+    "category": "DBZ",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/vegeta.webp",
+    "targetHsb": [
+      225,
+      61,
+      88
+    ],
+    "active": true,
+    "sortOrder": 186,
+    "createdAt": "2026-05-23T19:38:08.154Z"
+  },
+  {
+    "slug": "freeza",
+    "name": "Freeza",
+    "category": "DBZ",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/freeza.webp",
+    "targetHsb": [
+      277,
+      68,
+      79
+    ],
+    "active": true,
+    "sortOrder": 196,
+    "createdAt": "2026-05-23T19:39:32.121Z"
+  },
+  {
+    "slug": "freeza",
+    "name": "Freeza",
+    "category": "DBZ",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/freeza.webp",
+    "targetHsb": [
+      277,
+      68,
+      79
+    ],
+    "active": true,
+    "sortOrder": 197,
+    "createdAt": "2026-05-23T19:39:32.121Z"
+  },
+  {
+    "slug": "freeza",
+    "name": "Freeza",
+    "category": "DBZ",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/freeza.webp",
+    "targetHsb": [
+      277,
+      68,
+      79
+    ],
+    "active": true,
+    "sortOrder": 198,
+    "createdAt": "2026-05-23T19:39:32.121Z"
+  },
+  {
+    "slug": "majin-boo",
+    "name": "Majin Boo",
+    "category": "DBZ",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/majin-boo.webp",
+    "targetHsb": [
+      353,
+      22,
+      89
+    ],
+    "active": true,
+    "sortOrder": 208,
+    "createdAt": "2026-05-23T19:45:37.041Z"
+  },
+  {
+    "slug": "majin-boo",
+    "name": "Majin Boo",
+    "category": "DBZ",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/majin-boo.webp",
+    "targetHsb": [
+      353,
+      22,
+      89
+    ],
+    "active": true,
+    "sortOrder": 209,
+    "createdAt": "2026-05-23T19:45:37.041Z"
+  },
+  {
+    "slug": "majin-boo",
+    "name": "Majin Boo",
+    "category": "DBZ",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/majin-boo.webp",
+    "targetHsb": [
+      353,
+      22,
+      89
+    ],
+    "active": true,
+    "sortOrder": 210,
+    "createdAt": "2026-05-23T19:45:37.041Z"
+  },
+  {
+    "slug": "dragon-ball",
+    "name": "Dragon Ball",
+    "category": "DBZ",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/dragon-ball.webp",
+    "targetHsb": [
+      0,
+      82,
+      84
+    ],
+    "active": true,
+    "sortOrder": 220,
+    "createdAt": "2026-05-23T19:48:08.729Z"
+  },
+  {
+    "slug": "dragon-ball",
+    "name": "Dragon Ball",
+    "category": "DBZ",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/dragon-ball.webp",
+    "targetHsb": [
+      0,
+      82,
+      84
+    ],
+    "active": true,
+    "sortOrder": 221,
+    "createdAt": "2026-05-23T19:48:08.729Z"
+  },
+  {
+    "slug": "dragon-ball",
+    "name": "Dragon Ball",
+    "category": "DBZ",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/dragon-ball.webp",
+    "targetHsb": [
+      0,
+      82,
+      84
+    ],
+    "active": true,
+    "sortOrder": 222,
+    "createdAt": "2026-05-23T19:48:08.729Z"
+  },
+  {
+    "slug": "dragon-ball-2",
+    "name": "Dragon Ball 2",
+    "category": "DBZ",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/dragon-ball-2.webp",
+    "targetHsb": [
+      56,
+      85,
+      98
+    ],
+    "active": true,
+    "sortOrder": 232,
+    "createdAt": "2026-05-23T19:48:57.761Z"
+  },
+  {
+    "slug": "dragon-ball-2",
+    "name": "Dragon Ball 2",
+    "category": "DBZ",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/dragon-ball-2.webp",
+    "targetHsb": [
+      56,
+      85,
+      98
+    ],
+    "active": true,
+    "sortOrder": 233,
+    "createdAt": "2026-05-23T19:48:57.761Z"
+  },
+  {
+    "slug": "dragon-ball-2",
+    "name": "Dragon Ball 2",
+    "category": "DBZ",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/dragon-ball-2.webp",
+    "targetHsb": [
+      56,
+      85,
+      98
+    ],
+    "active": true,
+    "sortOrder": 234,
+    "createdAt": "2026-05-23T19:48:57.761Z"
   }
 ]

@@ -5,9 +5,11 @@ import {
   loadCategories,
   loadLeaderboard,
   loadPrompts,
-  saveChallengeScore,
+  saveChallengeScoreDraft,
   saveScore,
+  updateChallengeScoreName,
   type ChallengeEntry,
+  type ChallengeScoreDraft,
   type ChallengeScoreEntry,
   type Difficulty,
   type LeaderboardEntry,
@@ -67,6 +69,13 @@ type CompareDragState = {
   rect: DOMRect;
 } | null;
 
+type CategoryDragState = {
+  pointerId: number;
+  startX: number;
+  startScrollLeft: number;
+  dragged: boolean;
+} | null;
+
 const ROUND_COUNT = 5;
 const STORAGE_THEME = "color_game_theme";
 const STORAGE_MUTED = "color_game_muted";
@@ -76,6 +85,7 @@ const DEFAULT_DIFFICULTY: Difficulty = "easy";
 const ALL_CATEGORY_LABEL = "All categories";
 const COUNTDOWN_STEPS = ["Ready", "Set", "Go"];
 const IMAGE_PRELOAD_TIMEOUT_MS = 15000;
+const CATEGORY_START_DELAY_MS = 220;
 
 const icons = {
   target:
@@ -117,9 +127,14 @@ let leaderboardCategory = ALL_CATEGORY_LABEL;
 let pickerValueHideTimer: number | undefined;
 let availableCategories: string[] = [];
 let compareDragState: CompareDragState = null;
+let categoryDragState: CategoryDragState = null;
+let suppressCategoryClick = false;
+let categorySelectionPending = false;
 let finalScorePosted = false;
 let baseScorePosted = false;
-let challengeScorePosted = false;
+let challengeScoreDraft: ChallengeScoreDraft | null = null;
+let challengeScoreDraftPromise: Promise<ChallengeScoreDraft | null> | null = null;
+let challengeScoreDraftRunId = 0;
 let lastChallengeShareUrl: string | undefined;
 let countdownInProgress = false;
 let pickerHasSelection = false;
@@ -263,7 +278,6 @@ app.innerHTML = `
           <button id="startButton" class="mode-button soundable" type="button" aria-label="Start game">
             ${icons.target}
           </button>
-          <button id="categoryButton" class="intro-text-button soundable" type="button">Categories</button>
           <button id="multiplayerButton" class="intro-text-button soundable" type="button">Multiplayer</button>
         </div>
       </section>
@@ -420,7 +434,6 @@ const refs = {
   challengeBoard: getEl<HTMLDivElement>("challengeBoard"),
   leaderboardScreen: getEl<HTMLElement>("leaderboardScreen"),
   startButton: getEl<HTMLButtonElement>("startButton"),
-  categoryButton: getEl<HTMLButtonElement>("categoryButton"),
   multiplayerButton: getEl<HTMLButtonElement>("multiplayerButton"),
   challengeIntroBoard: getEl<HTMLDivElement>("challengeIntroBoard"),
   countdownOverlay: getEl<HTMLDivElement>("countdownOverlay"),
@@ -507,19 +520,13 @@ function bindEvents(): void {
       void startGame();
     } else openCategorySelection();
   });
-  refs.categoryButton.addEventListener("click", () => {
-    sfx.click();
-    if (activeChallenge) {
-      requestMobileFullscreen();
-      void startGame();
-    } else openCategorySelection();
-  });
-  refs.categoryButton.addEventListener("mouseenter", () => {
-    sfx.hover();
-  });
   refs.multiplayerButton.addEventListener("mouseenter", () => {
     sfx.hover();
   });
+  refs.categoryList.addEventListener("pointerdown", handleCategoryPointerDown);
+  refs.categoryList.addEventListener("pointermove", handleCategoryPointerMove);
+  refs.categoryList.addEventListener("pointerup", handleCategoryPointerEnd);
+  refs.categoryList.addEventListener("pointercancel", handleCategoryPointerEnd);
   refs.categoryBack.addEventListener("click", () => {
     sfx.click();
     show("intro");
@@ -815,7 +822,9 @@ function showTotal(): void {
   const total = totalScore();
   finalScorePosted = false;
   baseScorePosted = false;
-  challengeScorePosted = false;
+  challengeScoreDraft = null;
+  challengeScoreDraftPromise = null;
+  challengeScoreDraftRunId += 1;
   lastChallengeShareUrl = activeChallenge
     ? activeChallenge.isLocal
       ? undefined
@@ -847,37 +856,46 @@ function showTotal(): void {
       },
     )
     .join("");
-  refs.playerNameInput.value =
-    formatPlayerName(localStorage.getItem(STORAGE_PLAYER_NAME) || "");
+  refs.playerNameInput.value = activeChallenge
+    ? ""
+    : formatPlayerName(localStorage.getItem(STORAGE_PLAYER_NAME) || "");
+  refs.playerNameInput.placeholder = activeChallenge ? "Nickname" : "Name";
   refs.scoreForm.classList.remove("is-saved");
   refs.saveScoreButton.disabled = false;
   refs.saveScoreButton.classList.remove("copied");
   refs.saveScoreButton.style.removeProperty("background");
   refs.saveScoreButton.style.removeProperty("color");
   refs.saveScoreButton.textContent = activeChallenge
-    ? "Post result & copy link"
+    ? "Save score"
     : "Post score & challenge a friend";
-  refs.scoreSaveStatus.textContent = activeChallenge
-    ? "Post this result to the challenge and copy the same link."
-    : "Post your score and copy a challenge link.";
+  refs.scoreSaveStatus.textContent = "Post your score and copy a challenge link.";
   refs.scoreSaveStatus.dataset.state = "idle";
   hideChallengeLinkOutput();
   renderChallengeResult(total);
   renderChallengeBoards("total");
+  if (activeChallenge) startChallengeScoreDraft(total);
   sfx.scoreLand();
   show("total");
 }
 
 async function submitFinalScore(): Promise<void> {
-  const playerName = formatPlayerName(refs.playerNameInput.value) || "PLAY";
+  const enteredName = formatPlayerName(refs.playerNameInput.value);
   const challenge = activeChallenge;
+
+  if (challenge) {
+    refs.playerNameInput.value = enteredName;
+    await submitChallengeScoreName(challenge, enteredName);
+    return;
+  }
+
+  const playerName = enteredName || "PLAY";
   refs.playerNameInput.value = playerName;
 
   if (finalScorePosted && lastChallengeShareUrl) {
     refs.saveScoreButton.disabled = true;
     refs.saveScoreButton.textContent = "Copying";
     const shared = await shareChallengeLink(
-      currentShareText(playerName, challenge),
+      currentShareText(playerName, null),
       new URL(lastChallengeShareUrl),
     );
     refs.saveScoreButton.disabled = false;
@@ -912,38 +930,17 @@ async function submitFinalScore(): Promise<void> {
         rounds,
       });
     baseScorePosted = true;
-    const challengeSaved = challenge
-      ? challenge.isLocal || challengeScorePosted || await saveChallengeScore({
-        challengeCode: challenge.code,
-        playerName,
-        totalScore: total,
-        rounds,
-      })
-      : true;
-    if (challenge && challengeSaved) {
-      challengeScorePosted = true;
-      if (challenge.score === null && playerName === challenge.name) {
-        challenge.score = total;
-      }
-      if (!challenge.isLocal) await refreshChallengeScores(challenge.code);
-      renderChallengeResult(total);
-      renderChallengeBoards("total");
-    }
     localStorage.setItem(STORAGE_PLAYER_NAME, playerName);
     refs.scoreForm.classList.add("is-saved");
-    const shared = challenge
-      ? await shareExistingChallenge(playerName, challenge)
-      : await shareScoreChallenge(playerName);
+    const shared = await shareScoreChallenge(playerName);
     const saveLocation =
       savedTo === "remote" ? "Score posted." : "Score saved locally.";
-    const challengeLocation =
-      challenge && !challengeSaved ? " Challenge result could not be posted." : "";
 
     if (shared.status === "failed") {
       refs.saveScoreButton.textContent = "Couldn't copy";
       refs.saveScoreButton.style.background = "#333";
       refs.saveScoreButton.style.color = "#fff";
-      refs.scoreSaveStatus.textContent = `${saveLocation}${challengeLocation} Could not create a challenge link.`;
+      refs.scoreSaveStatus.textContent = `${saveLocation} Could not create a challenge link.`;
       refs.scoreSaveStatus.dataset.state = "error";
     } else {
       refs.saveScoreButton.classList.add("copied");
@@ -955,36 +952,136 @@ async function submitFinalScore(): Promise<void> {
             : "Link copied";
       refs.scoreSaveStatus.textContent =
         shared.status === "native"
-          ? `${saveLocation}${challengeLocation} Challenge opened for sharing.`
+          ? `${saveLocation} Challenge opened for sharing.`
           : shared.status === "ready"
-            ? `${saveLocation}${challengeLocation} Clipboard blocked; challenge link is shown below.`
-            : `${saveLocation}${challengeLocation} Challenge link copied.`;
+            ? `${saveLocation} Clipboard blocked; challenge link is shown below.`
+            : `${saveLocation} Challenge link copied.`;
       refs.scoreSaveStatus.dataset.state = "success";
       if (shared.status === "ready") {
         showChallengeLinkOutput(shared.url);
       } else {
         hideChallengeLinkOutput();
       }
-      finalScorePosted = !challenge || challengeSaved;
+      finalScorePosted = true;
       lastChallengeShareUrl = shared.url || lastChallengeShareUrl;
       window.setTimeout(() => {
         refs.saveScoreButton.classList.remove("copied");
         refs.saveScoreButton.style.removeProperty("background");
         refs.saveScoreButton.style.removeProperty("color");
-        refs.saveScoreButton.textContent = challenge
-          ? "Copy challenge link"
-          : "Challenge a friend";
+        refs.saveScoreButton.textContent = "Challenge a friend";
       }, 2500);
     }
     refs.saveScoreButton.disabled = false;
     sfx.scoreLand();
   } catch {
     refs.saveScoreButton.disabled = false;
-    refs.saveScoreButton.textContent = activeChallenge
-      ? "Post result & copy link"
-      : "Post score & challenge a friend";
+    refs.saveScoreButton.textContent = "Post score & challenge a friend";
     refs.scoreSaveStatus.textContent = "Could not save. Try again.";
     refs.scoreSaveStatus.dataset.state = "error";
+  }
+}
+
+function startChallengeScoreDraft(total: number): void {
+  const challenge = activeChallenge;
+  if (!challenge) return;
+
+  if (challenge.isLocal) {
+    refs.saveScoreButton.disabled = true;
+    refs.scoreSaveStatus.textContent = "This local challenge cannot post scores.";
+    refs.scoreSaveStatus.dataset.state = "error";
+    return;
+  }
+
+  const runId = challengeScoreDraftRunId;
+  const rounds = currentScoreRounds();
+  refs.saveScoreButton.disabled = true;
+  refs.saveScoreButton.textContent = "Saving";
+  refs.scoreSaveStatus.textContent = "Saving score...";
+  refs.scoreSaveStatus.dataset.state = "pending";
+
+  challengeScoreDraftPromise = saveChallengeScoreDraft({
+    challengeCode: challenge.code,
+    playerName: randomGuestName(),
+    totalScore: total,
+    rounds,
+  })
+    .then((draft) => {
+      if (runId !== challengeScoreDraftRunId) return null;
+      challengeScoreDraft = draft;
+      refs.saveScoreButton.disabled = !draft;
+      refs.saveScoreButton.textContent = "Save score";
+      refs.scoreSaveStatus.textContent = draft
+        ? "Score saved. Add a nickname to claim it."
+        : "Could not save score. Try again.";
+      refs.scoreSaveStatus.dataset.state = draft ? "success" : "error";
+      return draft;
+    })
+    .catch(() => {
+      if (runId !== challengeScoreDraftRunId) return null;
+      refs.saveScoreButton.disabled = true;
+      refs.saveScoreButton.textContent = "Save score";
+      refs.scoreSaveStatus.textContent = "Could not save score. Try again.";
+      refs.scoreSaveStatus.dataset.state = "error";
+      return null;
+    });
+}
+
+async function submitChallengeScoreName(
+  challenge: SharedChallenge,
+  playerName: string,
+): Promise<void> {
+  if (!refs.playerNameInput.value.trim()) {
+    refs.playerNameInput.focus();
+    refs.scoreSaveStatus.textContent = "Add a nickname before saving.";
+    refs.scoreSaveStatus.dataset.state = "error";
+    return;
+  }
+
+  if (challenge.isLocal) return;
+
+  refs.saveScoreButton.disabled = true;
+  refs.saveScoreButton.textContent = "Saving";
+  refs.scoreSaveStatus.textContent = "Saving nickname...";
+  refs.scoreSaveStatus.dataset.state = "pending";
+
+  try {
+    const draft = challengeScoreDraft || await challengeScoreDraftPromise;
+    if (!draft) throw new Error("missing challenge score draft");
+    if (!draft.editToken) {
+      refs.saveScoreButton.textContent = "Save score";
+      refs.scoreSaveStatus.textContent =
+        "Score is posted. Nickname updates need the latest database migration.";
+      refs.scoreSaveStatus.dataset.state = "error";
+      return;
+    }
+
+    const updated = await updateChallengeScoreName(
+      draft.entry.id,
+      draft.editToken,
+      playerName,
+    );
+    if (!updated) throw new Error("challenge score update failed");
+
+    localStorage.setItem(STORAGE_PLAYER_NAME, playerName);
+    refs.scoreForm.classList.add("is-saved");
+    refs.saveScoreButton.classList.add("copied");
+    refs.saveScoreButton.textContent = "Saved";
+    refs.scoreSaveStatus.textContent = "Score saved to this challenge.";
+    refs.scoreSaveStatus.dataset.state = "success";
+    await refreshChallengeScores(challenge.code);
+    renderChallengeResult(totalScore());
+    renderChallengeBoards("total");
+    window.setTimeout(() => {
+      refs.saveScoreButton.classList.remove("copied");
+      refs.saveScoreButton.textContent = "Save score";
+    }, 1800);
+    sfx.scoreLand();
+  } catch {
+    refs.saveScoreButton.textContent = "Save score";
+    refs.scoreSaveStatus.textContent = "Could not save nickname. Try again.";
+    refs.scoreSaveStatus.dataset.state = "error";
+  } finally {
+    refs.saveScoreButton.disabled = false;
   }
 }
 
@@ -1175,14 +1272,8 @@ function renderCategoryTabs(container: HTMLElement, active: string): void {
 }
 
 function updateRunUi(): void {
-  refs.categoryButton.textContent = activeChallenge ? "Challenge run" : categoryButtonLabel();
   refs.gameCard.dataset.difficulty = selectedDifficulty;
-  refs.categoryButton.disabled = Boolean(activeChallenge);
   refs.multiplayerButton.disabled = Boolean(activeChallenge);
-}
-
-function categoryButtonLabel(): string {
-  return selectedCategory === "all" ? "Categories" : scoreCategoryLabel();
 }
 
 function scoreCategoryLabel(): string {
@@ -1441,8 +1532,19 @@ function renderCategoryChoices(): void {
           }"
           type="button"
           data-category="${escapeHtml(category)}"
+          aria-label="${escapeHtml(category === "all" ? ALL_CATEGORY_LABEL : category)}"
         >
-          <span>${category === "all" ? "All categories" : escapeHtml(category)}</span>
+          <img
+            class="category-choice-art"
+            src="${categoryArtworkSrc(category)}"
+            alt=""
+            width="512"
+            height="512"
+            loading="lazy"
+            decoding="async"
+            draggable="false"
+          />
+          <span>${category === "all" ? ALL_CATEGORY_LABEL : escapeHtml(category)}</span>
         </button>
       `
     )
@@ -1451,16 +1553,86 @@ function renderCategoryChoices(): void {
     .querySelectorAll<HTMLButtonElement>("[data-category]")
     .forEach((button) => {
       button.addEventListener("click", () => {
+        if (suppressCategoryClick || categorySelectionPending) return;
+        categorySelectionPending = true;
         selectedCategory = button.dataset.category || "all";
         localStorage.setItem(STORAGE_CATEGORY, selectedCategory);
         leaderboardCategory = scoreCategoryLabel();
+        refs.categoryList
+          .querySelectorAll<HTMLButtonElement>("[data-category]")
+          .forEach((choice) => {
+            choice.classList.toggle("active", choice === button);
+          });
+        refs.categoryList.classList.add("selecting");
         updateRunUi();
         sfx.click();
         requestMobileFullscreen();
-        void startGame();
+        window.setTimeout(() => {
+          refs.categoryList.classList.remove("selecting");
+          categorySelectionPending = false;
+          void startGame();
+        }, CATEGORY_START_DELAY_MS);
       });
       button.addEventListener("mouseenter", () => sfx.hover());
     });
+}
+
+function categoryArtworkSrc(category: string): string {
+  const key = normalizeCategoryKey(category);
+  if (key === "dbz") return "/assets/categories/dbz.webp";
+  if (key === "desenhos") return "/assets/categories/desenhos.webp";
+  if (key === "pokemon") return "/assets/categories/pokemon.webp";
+  return "/assets/categories/all.webp";
+}
+
+function normalizeCategoryKey(category: string): string {
+  return category
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function handleCategoryPointerDown(event: PointerEvent): void {
+  if (event.pointerType === "mouse" && event.button !== 0) return;
+  if (window.matchMedia("(max-width: 720px)").matches) return;
+
+  categoryDragState = {
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startScrollLeft: refs.categoryList.scrollLeft,
+    dragged: false,
+  };
+  refs.categoryList.setPointerCapture(event.pointerId);
+}
+
+function handleCategoryPointerMove(event: PointerEvent): void {
+  if (!categoryDragState || categoryDragState.pointerId !== event.pointerId) return;
+
+  const deltaX = event.clientX - categoryDragState.startX;
+  if (Math.abs(deltaX) > 4) {
+    categoryDragState.dragged = true;
+    refs.categoryList.classList.add("dragging");
+  }
+  if (!categoryDragState.dragged) return;
+
+  event.preventDefault();
+  refs.categoryList.scrollLeft = categoryDragState.startScrollLeft - deltaX;
+}
+
+function handleCategoryPointerEnd(event: PointerEvent): void {
+  if (!categoryDragState || categoryDragState.pointerId !== event.pointerId) return;
+
+  if (refs.categoryList.hasPointerCapture(event.pointerId)) {
+    refs.categoryList.releasePointerCapture(event.pointerId);
+  }
+  if (categoryDragState.dragged) {
+    suppressCategoryClick = true;
+    window.setTimeout(() => {
+      suppressCategoryClick = false;
+    }, 0);
+  }
+  categoryDragState = null;
+  refs.categoryList.classList.remove("dragging");
 }
 
 function show(nextScreen: Screen): void {
@@ -1997,6 +2169,12 @@ function formatPlayerName(value: string): string {
     .replace(/[^a-zA-Z0-9]/g, "")
     .toUpperCase()
     .slice(0, 4);
+}
+
+function randomGuestName(): string {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const values = crypto.getRandomValues(new Uint8Array(3));
+  return `G${Array.from(values, (value) => alphabet[value % alphabet.length]).join("")}`;
 }
 
 async function copyText(value: string): Promise<boolean> {
