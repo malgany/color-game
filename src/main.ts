@@ -817,7 +817,9 @@ function showTotal(): void {
   baseScorePosted = false;
   challengeScorePosted = false;
   lastChallengeShareUrl = activeChallenge
-    ? buildChallengeShareUrl(activeChallenge).toString()
+    ? activeChallenge.isLocal
+      ? undefined
+      : buildChallengeUrl(activeChallenge.code).toString()
     : undefined;
   refs.totalScore.textContent = total.toFixed(2);
   refs.totalMessage.textContent = activeChallenge
@@ -998,16 +1000,7 @@ async function shareScoreChallenge(
     prompts,
     rounds: currentScoreRounds(),
   });
-  if (!challenge) {
-    const localChallenge = createLocalChallenge(
-      playerName,
-      total,
-      DEFAULT_DIFFICULTY,
-      prompts,
-    );
-    const shareUrl = buildChallengeShareUrl(localChallenge);
-    return shareChallengeLink(currentShareText(playerName, null), shareUrl);
-  }
+  if (!challenge) return { status: "failed" };
 
   const shareUrl = buildChallengeUrl(challenge.code);
   return shareChallengeLink(currentShareText(playerName, null), shareUrl);
@@ -1017,11 +1010,25 @@ async function shareExistingChallenge(
   playerName: string,
   challenge: SharedChallenge,
 ): Promise<ShareResult> {
-  const shareUrl = buildChallengeShareUrl(challenge);
-  return shareChallengeLink(
-    currentShareText(playerName, challenge),
-    shareUrl,
-  );
+  const remoteChallenge = challenge.isLocal
+    ? await createChallenge({
+      creatorName: challenge.name,
+      creatorScore: challenge.score === null ? undefined : challenge.score,
+      difficulty: challenge.difficulty,
+      prompts: challenge.prompts,
+    })
+    : null;
+
+  if (challenge.isLocal) {
+    if (!remoteChallenge) return { status: "failed" };
+    activeChallenge = challengeEntryToShared(remoteChallenge);
+    challenge = activeChallenge;
+    challengeScores = [];
+    renderChallengeBoards("total");
+  }
+
+  const shareUrl = buildChallengeUrl(challenge.code);
+  return shareChallengeLink(currentShareText(playerName, challenge), shareUrl);
 }
 
 function currentShareText(
@@ -1045,30 +1052,6 @@ function buildChallengeUrl(code: string): URL {
   shareUrl.search = "";
   shareUrl.hash = "";
   shareUrl.searchParams.set("c", code);
-  return shareUrl;
-}
-
-function buildChallengeShareUrl(challenge: SharedChallenge): URL {
-  if (challenge.isLocal) return buildLocalChallengeUrl(challenge);
-  return buildChallengeUrl(challenge.code);
-}
-
-function buildLocalChallengeUrl(challenge: SharedChallenge): URL {
-  const shareUrl = new URL(window.location.href);
-  shareUrl.search = "";
-  shareUrl.hash = "";
-  shareUrl.searchParams.set(
-    "lc",
-    encodeBase64Url(
-      JSON.stringify({
-        v: 1,
-        name: challenge.name,
-        score: challenge.score,
-        difficulty: challenge.difficulty,
-        prompts: challenge.prompts,
-      } satisfies LocalChallengePayload),
-    ),
-  );
   return shareUrl;
 }
 
@@ -1414,11 +1397,12 @@ async function submitMultiplayerSetup(): Promise<void> {
 
     activeChallenge = challenge
       ? challengeEntryToShared(challenge)
-      : createLocalChallenge(creatorName, null, DEFAULT_DIFFICULTY, prompts);
+      : null;
+    if (!activeChallenge) throw new Error("challenge create failed");
     challengeScores = [];
     localStorage.setItem(STORAGE_PLAYER_NAME, creatorName);
     leaderboardCategory = scoreCategoryLabel();
-    lastChallengeShareUrl = buildChallengeShareUrl(activeChallenge).toString();
+    lastChallengeShareUrl = buildChallengeUrl(activeChallenge.code).toString();
     updateRunUi();
     applyChallengeIntro();
 
@@ -2088,15 +2072,6 @@ function isLocalChallengePrompt(value: unknown): value is PromptItem {
 
 function isDifficulty(value: unknown): value is Difficulty {
   return value === "easy" || value === "hard" || value === "brutal";
-}
-
-function encodeBase64Url(value: string): string {
-  const bytes = new TextEncoder().encode(value);
-  let binary = "";
-  bytes.forEach((byte) => {
-    binary += String.fromCharCode(byte);
-  });
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 function decodeBase64Url(value: string): string {
