@@ -1579,10 +1579,10 @@ function renderCategoryChoices(): void {
 
 function categoryArtworkSrc(category: string): string {
   const key = normalizeCategoryKey(category);
-  if (key === "dbz") return "/assets/categories/dbz.webp";
-  if (key === "desenhos") return "/assets/categories/desenhos.webp";
-  if (key === "pokemon") return "/assets/categories/pokemon.webp";
-  return "/assets/categories/all.webp";
+  if (key === "dbz") return assetSrc("assets/categories/dbz.webp");
+  if (key === "desenhos") return assetSrc("assets/categories/desenhos.webp");
+  if (key === "pokemon") return assetSrc("assets/categories/pokemon.webp");
+  return assetSrc("assets/categories/all.webp");
 }
 
 function normalizeCategoryKey(category: string): string {
@@ -1590,6 +1590,10 @@ function normalizeCategoryKey(category: string): string {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
+}
+
+function assetSrc(path: string): string {
+  return `${import.meta.env.BASE_URL}${path.replace(/^\/+/, "")}`;
 }
 
 function handleCategoryPointerDown(event: PointerEvent): void {
