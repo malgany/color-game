@@ -356,6 +356,38 @@ svg {
   position: static;
 }
 
+@media (min-width: 721px) {
+  .intro-screen.has-challenge {
+    grid-template-columns: 184px minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    column-gap: 20px;
+    row-gap: 14px;
+  }
+
+  .intro-screen.has-challenge h1 {
+    grid-column: 1 / -1;
+  }
+
+  .intro-screen.has-challenge .intro-copy {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: start;
+    width: 100%;
+  }
+
+  .intro-screen.has-challenge .intro-challenge-board {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+  }
+
+  .intro-screen.has-challenge .intro-actions {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    align-self: end;
+  }
+}
+
 .ghost-orbit {
   position: absolute;
   top: 30px;
@@ -1345,6 +1377,9 @@ svg {
 }
 
 .leaderboard-screen {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 16px;
   padding: 30px;
   background: #000;
 }
@@ -1359,20 +1394,53 @@ svg {
 }
 
 .leaderboard-tabs {
-  margin-top: 16px;
+  min-width: 0;
+  margin-top: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.leaderboard-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.leaderboard-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .leaderboard-list {
   display: grid;
   gap: 7px;
   width: 100%;
-  margin-top: 18px;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin-top: 0;
   padding-right: 6px;
+  scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
+  scrollbar-width: thin;
+}
+
+.leaderboard-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.leaderboard-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.leaderboard-list::-webkit-scrollbar-thumb {
+  border: 3px solid #000;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.24);
 }
 
 .leaderboard-row {
   display: grid;
-  grid-template-columns: 24px 1fr 58px 48px;
+  grid-template-columns: 24px minmax(0, 1fr) 58px 76px;
   gap: 8px;
   align-items: center;
   min-height: 23px;
@@ -1397,6 +1465,7 @@ svg {
 
 .leaderboard-row time {
   text-align: right;
+  white-space: nowrap;
 }
 
 .leaderboard-empty {
@@ -1412,6 +1481,13 @@ svg {
   left: 30px;
   bottom: 30px;
   padding: 0 16px;
+}
+
+.leaderboard-controls .mini-action {
+  position: static;
+  flex: 0 0 auto;
+  height: 30px;
+  padding: 0 13px;
 }
 
 .footer-links {

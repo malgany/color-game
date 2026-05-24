@@ -102,6 +102,13 @@ alter table public.color_challenges
 create index if not exists color_challenge_scores_code_score_idx
   on public.color_challenge_scores (challenge_code, total_score desc, created_at asc);
 
+alter table public.color_scores
+  add column if not exists source_challenge_score_id uuid references public.color_challenge_scores(id) on delete set null;
+
+create unique index if not exists color_scores_source_challenge_score_uidx
+  on public.color_scores (source_challenge_score_id)
+  where source_challenge_score_id is not null;
+
 alter table public.color_prompts enable row level security;
 alter table public.color_scores enable row level security;
 alter table public.color_challenges enable row level security;
@@ -179,12 +186,135 @@ begin
     and char_length(trim(new_player_name)) between 1 and 24;
 
   get diagnostics updated_count = row_count;
+  if updated_count = 1 then
+    update public.color_scores
+    set player_name = trim(new_player_name)
+    where source_challenge_score_id = score_id;
+  end if;
+
   return updated_count = 1;
 end;
 $$;
 
 revoke all on function public.update_challenge_score_name(uuid, text, text) from public;
 grant execute on function public.update_challenge_score_name(uuid, text, text) to anon, authenticated;
+
+with challenge_score_backfill as (
+  select
+    challenge_score.id as source_challenge_score_id,
+    challenge_score.player_name,
+    challenge_score.total_score,
+    challenge.difficulty,
+    coalesce(
+      case
+        when count(distinct nullif(prompt.value ->> 'category', '')) = 1
+          then max(nullif(prompt.value ->> 'category', ''))
+        else 'All categories'
+      end,
+      'All categories'
+    ) as category,
+    challenge_score.rounds,
+    challenge_score.created_at
+  from public.color_challenge_scores challenge_score
+  join public.color_challenges challenge
+    on challenge.code = challenge_score.challenge_code
+  left join lateral jsonb_array_elements(challenge.prompts) as prompt(value)
+    on true
+  where not (
+    challenge.creator_score is not null
+    and challenge_score.player_name = challenge.creator_name
+    and challenge_score.total_score = challenge.creator_score
+  )
+  group by
+    challenge_score.id,
+    challenge_score.player_name,
+    challenge_score.total_score,
+    challenge.difficulty,
+    challenge_score.rounds,
+    challenge_score.created_at
+),
+existing_backfill_matches as (
+  select
+    score.id as score_id,
+    backfill.source_challenge_score_id,
+    row_number() over (
+      partition by backfill.source_challenge_score_id
+      order by score.id
+    ) as match_rank
+  from public.color_scores score
+  join challenge_score_backfill backfill
+    on score.player_name = backfill.player_name
+    and score.total_score = backfill.total_score
+    and score.created_at = backfill.created_at
+  where score.source_challenge_score_id is null
+)
+update public.color_scores score
+set source_challenge_score_id = match.source_challenge_score_id
+from existing_backfill_matches match
+where score.id = match.score_id
+  and match.match_rank = 1;
+
+insert into public.color_scores (
+  player_name,
+  total_score,
+  difficulty,
+  category,
+  rounds,
+  created_at,
+  source_challenge_score_id
+)
+select
+  backfill.player_name,
+  backfill.total_score,
+  backfill.difficulty,
+  backfill.category,
+  backfill.rounds,
+  backfill.created_at,
+  backfill.source_challenge_score_id
+from (
+  select
+    challenge_score.id as source_challenge_score_id,
+    challenge_score.player_name,
+    challenge_score.total_score,
+    challenge.difficulty,
+    coalesce(
+      case
+        when count(distinct nullif(prompt.value ->> 'category', '')) = 1
+          then max(nullif(prompt.value ->> 'category', ''))
+        else 'All categories'
+      end,
+      'All categories'
+    ) as category,
+    challenge_score.rounds,
+    challenge_score.created_at
+  from public.color_challenge_scores challenge_score
+  join public.color_challenges challenge
+    on challenge.code = challenge_score.challenge_code
+  left join lateral jsonb_array_elements(challenge.prompts) as prompt(value)
+    on true
+  where not (
+    challenge.creator_score is not null
+    and challenge_score.player_name = challenge.creator_name
+    and challenge_score.total_score = challenge.creator_score
+  )
+  group by
+    challenge_score.id,
+    challenge_score.player_name,
+    challenge_score.total_score,
+    challenge.difficulty,
+    challenge_score.rounds,
+    challenge_score.created_at
+) as backfill
+where not exists (
+  select 1
+  from public.color_scores score
+  where score.source_challenge_score_id = backfill.source_challenge_score_id
+    or (
+      score.player_name = backfill.player_name
+      and score.total_score = backfill.total_score
+      and score.created_at = backfill.created_at
+    )
+);
 
 delete from public.color_prompts
 where category = 'general'

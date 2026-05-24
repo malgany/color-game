@@ -397,9 +397,11 @@ app.innerHTML = `
       <section id="leaderboardScreen" class="screen leaderboard-screen" aria-label="High scores">
         <button id="leaderboardClose" class="mini-close soundable" type="button" aria-label="Close high scores">Close</button>
         <h2>high scores</h2>
-        <div id="leaderboardTabs" class="difficulty-tabs leaderboard-tabs" role="tablist" aria-label="Leaderboard category"></div>
+        <div class="leaderboard-controls">
+          <div id="leaderboardTabs" class="difficulty-tabs leaderboard-tabs" role="tablist" aria-label="Leaderboard category"></div>
+          <button id="leaderboardRefresh" class="mini-action soundable" type="button">Refresh</button>
+        </div>
         <div id="leaderboardList" class="leaderboard-list" aria-live="polite"></div>
-        <button id="leaderboardRefresh" class="mini-action soundable" type="button">Refresh</button>
       </section>
       <div id="countdownOverlay" class="countdown-overlay" aria-live="assertive" aria-hidden="true" hidden>
         <span id="countdownText">Ready</span>
@@ -1061,12 +1063,26 @@ async function submitChallengeScoreName(
       playerName,
     );
     if (!updated) throw new Error("challenge score update failed");
+    const savedTo = baseScorePosted
+      ? "remote"
+      : await saveScore({
+        playerName,
+        totalScore: totalScore(),
+        difficulty: challenge.difficulty,
+        category: challengeScoreCategory(challenge),
+        rounds: currentScoreRounds(),
+        sourceChallengeScoreId: draft.entry.id,
+      });
+    baseScorePosted = true;
 
     localStorage.setItem(STORAGE_PLAYER_NAME, playerName);
     refs.scoreForm.classList.add("is-saved");
     refs.saveScoreButton.classList.add("copied");
     refs.saveScoreButton.textContent = "Saved";
-    refs.scoreSaveStatus.textContent = "Score saved to this challenge.";
+    refs.scoreSaveStatus.textContent =
+      savedTo === "remote"
+        ? "Score saved to this challenge and high scores."
+        : "Score saved to this challenge. High score saved locally.";
     refs.scoreSaveStatus.dataset.state = "success";
     await refreshChallengeScores(challenge.code);
     renderChallengeResult(totalScore());
@@ -1379,6 +1395,17 @@ function challengeEntryToShared(challenge: ChallengeEntry): SharedChallenge {
     difficulty: challenge.difficulty,
     prompts: challenge.prompts,
   };
+}
+
+function challengeScoreCategory(challenge: SharedChallenge): string {
+  const categories = Array.from(
+    new Set(
+      challenge.prompts
+        .map((prompt) => prompt.category)
+        .filter((category): category is string => Boolean(category)),
+    ),
+  );
+  return categories.length === 1 ? categories[0] : ALL_CATEGORY_LABEL;
 }
 
 function createLocalChallenge(

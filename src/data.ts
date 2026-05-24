@@ -55,6 +55,7 @@ export type ScoreSubmission = {
   difficulty: Difficulty;
   category: string;
   rounds: ScoreRound[];
+  sourceChallengeScoreId?: string;
 };
 
 export type LeaderboardEntry = {
@@ -181,8 +182,29 @@ export async function saveScore(
   };
 
   if (supabase) {
-    const { error } = await supabase.from("color_scores").insert(payload);
-    if (!error) return "remote";
+    const remotePayload = submission.sourceChallengeScoreId
+      ? {
+        ...payload,
+        source_challenge_score_id: submission.sourceChallengeScoreId,
+      }
+      : payload;
+    const { error } = await supabase.from("color_scores").insert(remotePayload);
+    if (
+      !error ||
+      (submission.sourceChallengeScoreId && isDuplicateSourceScoreError(error))
+    ) {
+      return "remote";
+    }
+
+    if (
+      submission.sourceChallengeScoreId &&
+      isMissingSourceScoreColumnError(error)
+    ) {
+      const { error: fallbackError } = await supabase
+        .from("color_scores")
+        .insert(payload);
+      if (!fallbackError) return "remote";
+    }
   }
 
   const scores = readLocalScores();
@@ -373,10 +395,14 @@ export async function loadLeaderboard(category: string): Promise<LeaderboardEntr
   const scoreCategory = cleanScoreCategory(category);
 
   if (supabase) {
-    const { data, error } = await supabase
+    let query = supabase
       .from("color_scores")
-      .select("id,player_name,total_score,difficulty,category,created_at")
-      .eq("category", scoreCategory)
+      .select("id,player_name,total_score,difficulty,category,created_at");
+    if (!isAllCategories(scoreCategory)) {
+      query = query.eq("category", scoreCategory);
+    }
+
+    const { data, error } = await query
       .order("total_score", { ascending: false })
       .order("created_at", { ascending: true })
       .limit(20);
@@ -385,7 +411,7 @@ export async function loadLeaderboard(category: string): Promise<LeaderboardEntr
   }
 
   return readLocalScores()
-    .filter((entry) => entry.category === scoreCategory)
+    .filter((entry) => isAllCategories(scoreCategory) || entry.category === scoreCategory)
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 20);
 }
@@ -623,4 +649,39 @@ export function cleanPlayerName(value: string): string {
 function cleanScoreCategory(value: string): string {
   const cleaned = value.trim().replace(/\s+/g, " ").slice(0, 40);
   return cleaned || "All categories";
+}
+
+function isAllCategories(category: string): boolean {
+  return cleanScoreCategory(category).toLowerCase() === "all categories";
+}
+
+function isDuplicateSourceScoreError(error: unknown): boolean {
+  return errorCode(error) === "23505";
+}
+
+function isMissingSourceScoreColumnError(error: unknown): boolean {
+  const message = errorMessage(error);
+  return (
+    errorCode(error) === "42703" ||
+    errorCode(error) === "PGRST204" ||
+    message.includes("source_challenge_score_id")
+  );
+}
+
+function errorCode(error: unknown): string {
+  return typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof error.code === "string"
+    ? error.code
+    : "";
+}
+
+function errorMessage(error: unknown): string {
+  return typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof error.message === "string"
+    ? error.message
+    : "";
 }
