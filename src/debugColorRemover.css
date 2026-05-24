@@ -139,6 +139,7 @@
 }
 
 .debug-sidebar input[type="file"],
+.debug-sidebar input[type="color"],
 .debug-save-form input,
 .debug-save-form select {
   width: 100%;
@@ -166,6 +167,55 @@
 .debug-sidebar input[type="range"] {
   width: 100%;
   accent-color: #86efac;
+}
+
+.debug-tool-mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.debug-sidebar .debug-tool-mode button {
+  height: 36px;
+  margin-top: 0;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.debug-sidebar .debug-tool-mode button.active {
+  background: #86efac;
+  color: #06110a;
+}
+
+.debug-placement-controls,
+.debug-remove-controls,
+.debug-paint-controls {
+  margin-top: 14px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.debug-placement-controls label,
+.debug-remove-controls label,
+.debug-paint-controls label {
+  margin-top: 8px;
+}
+
+.debug-placement-controls label:first-child,
+.debug-remove-controls label:first-child,
+.debug-paint-controls label:first-child {
+  margin-top: 0;
+}
+
+.debug-sidebar input[type="color"] {
+  height: 38px;
+  border-style: solid;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
 }
 
 .debug-check {
@@ -298,6 +348,10 @@
   max-height: none;
   cursor: crosshair;
   box-shadow: 0 14px 38px rgba(0, 0, 0, 0.34);
+}
+
+.debug-canvas-wrap[data-tool="paint"] canvas {
+  cursor: cell;
 }
 
 .debug-canvas-wrap.is-panning {

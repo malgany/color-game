@@ -20,7 +20,6 @@ import {
   type HsbColor,
   hsbCss,
   hsbToRgb,
-  readableSoftTextColor,
   readableTextColor,
   rgbCss,
   scoreHsb,
@@ -1701,13 +1700,10 @@ function updatePickerUi(): void {
   refs.pickerBg.classList.toggle("is-empty", !pickerHasSelection);
   if (pickerHasSelection) refs.pickerBg.style.background = selectedCss;
   else refs.pickerBg.style.removeProperty("background");
-  refs.pickerValues.style.color = readableTextColor(selectedRgb);
-  refs.pickerValues.previousElementSibling?.setAttribute(
-    "style",
-    `color: ${readableSoftTextColor(selectedRgb)}`,
-  );
-  refs.pickerRound.style.color = readableSoftTextColor(selectedRgb);
-  refs.pickerDifficulty.style.color = readableSoftTextColor(selectedRgb);
+  refs.pickerValues.style.removeProperty("color");
+  refs.pickerValues.previousElementSibling?.removeAttribute("style");
+  refs.pickerRound.style.removeProperty("color");
+  refs.pickerDifficulty.style.removeProperty("color");
   updateStripGradients();
   setHandlePosition(refs.hHandle, pickerHsb[0], 360, false);
   setHandlePosition(refs.sHandle, pickerHsb[1], 100, true);
