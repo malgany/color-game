@@ -1,0 +1,1352 @@
+[
+  {
+    "slug": "a-pantera-cor-de-rosa",
+    "name": "A Pantera Cor-de-Rosa",
+    "category": "Desenhos",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/a-pantera-cor-de-rosa.webp",
+    "targetHsb": [
+      346,
+      34,
+      96
+    ],
+    "active": true,
+    "sortOrder": 10,
+    "createdAt": "2026-05-22T06:06:00.629Z"
+  },
+  {
+    "slug": "a-pantera-cor-de-rosa",
+    "name": "A Pantera Cor-de-Rosa",
+    "category": "Desenhos",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/a-pantera-cor-de-rosa.webp",
+    "targetHsb": [
+      346,
+      34,
+      96
+    ],
+    "active": true,
+    "sortOrder": 10,
+    "createdAt": "2026-05-22T06:06:00.629Z"
+  },
+  {
+    "slug": "a-pantera-cor-de-rosa",
+    "name": "A Pantera Cor-de-Rosa",
+    "category": "Desenhos",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/a-pantera-cor-de-rosa.webp",
+    "targetHsb": [
+      346,
+      34,
+      96
+    ],
+    "active": true,
+    "sortOrder": 10,
+    "createdAt": "2026-05-22T06:06:00.629Z"
+  },
+  {
+    "slug": "pica-pau",
+    "name": "Pica-pau",
+    "category": "Desenhos",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/pica-pau.webp",
+    "targetHsb": [
+      218,
+      65,
+      72
+    ],
+    "active": true,
+    "sortOrder": 20,
+    "createdAt": "2026-05-22T06:53:01.151Z"
+  },
+  {
+    "slug": "pica-pau",
+    "name": "Pica-pau",
+    "category": "Desenhos",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/pica-pau.webp",
+    "targetHsb": [
+      218,
+      65,
+      72
+    ],
+    "active": true,
+    "sortOrder": 20,
+    "createdAt": "2026-05-22T06:53:01.151Z"
+  },
+  {
+    "slug": "pica-pau",
+    "name": "Pica-pau",
+    "category": "Desenhos",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/pica-pau.webp",
+    "targetHsb": [
+      218,
+      65,
+      72
+    ],
+    "active": true,
+    "sortOrder": 20,
+    "createdAt": "2026-05-22T06:53:01.151Z"
+  },
+  {
+    "slug": "tom-and-jerry",
+    "name": "Tom and Jerry",
+    "category": "Desenhos",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/tom-and-jerry.webp",
+    "targetHsb": [
+      211,
+      75,
+      42
+    ],
+    "active": true,
+    "sortOrder": 30,
+    "createdAt": "2026-05-22T07:02:57.471Z"
+  },
+  {
+    "slug": "tom-and-jerry",
+    "name": "Tom and Jerry",
+    "category": "Desenhos",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/tom-and-jerry.webp",
+    "targetHsb": [
+      211,
+      75,
+      42
+    ],
+    "active": true,
+    "sortOrder": 30,
+    "createdAt": "2026-05-22T07:02:57.471Z"
+  },
+  {
+    "slug": "tom-and-jerry",
+    "name": "Tom and Jerry",
+    "category": "Desenhos",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/tom-and-jerry.webp",
+    "targetHsb": [
+      211,
+      75,
+      42
+    ],
+    "active": true,
+    "sortOrder": 30,
+    "createdAt": "2026-05-22T07:02:57.471Z"
+  },
+  {
+    "slug": "os-flintstones",
+    "name": "Os Flintstones",
+    "category": "Desenhos",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/os-flintstones.webp",
+    "targetHsb": [
+      28,
+      86,
+      76
+    ],
+    "active": true,
+    "sortOrder": 40,
+    "createdAt": "2026-05-22T07:17:26.395Z"
+  },
+  {
+    "slug": "os-flintstones",
+    "name": "Os Flintstones",
+    "category": "Desenhos",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/os-flintstones.webp",
+    "targetHsb": [
+      28,
+      86,
+      76
+    ],
+    "active": true,
+    "sortOrder": 41,
+    "createdAt": "2026-05-22T07:17:26.395Z"
+  },
+  {
+    "slug": "os-flintstones",
+    "name": "Os Flintstones",
+    "category": "Desenhos",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/os-flintstones.webp",
+    "targetHsb": [
+      28,
+      86,
+      76
+    ],
+    "active": true,
+    "sortOrder": 42,
+    "createdAt": "2026-05-22T07:17:26.395Z"
+  },
+  {
+    "slug": "dick-vigarista",
+    "name": "Dick Vigarista",
+    "category": "Desenhos",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/dick-vigarista.webp",
+    "targetHsb": [
+      259,
+      72,
+      31
+    ],
+    "active": true,
+    "sortOrder": 52,
+    "createdAt": "2026-05-22T17:57:19.475Z"
+  },
+  {
+    "slug": "dick-vigarista",
+    "name": "Dick Vigarista",
+    "category": "Desenhos",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/dick-vigarista.webp",
+    "targetHsb": [
+      259,
+      72,
+      31
+    ],
+    "active": true,
+    "sortOrder": 53,
+    "createdAt": "2026-05-22T17:57:19.475Z"
+  },
+  {
+    "slug": "dick-vigarista",
+    "name": "Dick Vigarista",
+    "category": "Desenhos",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/dick-vigarista.webp",
+    "targetHsb": [
+      259,
+      72,
+      31
+    ],
+    "active": true,
+    "sortOrder": 54,
+    "createdAt": "2026-05-22T17:57:19.475Z"
+  },
+  {
+    "slug": "marvin-the-martian",
+    "name": "Marvin the Martian",
+    "category": "Desenhos",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/marvin-the-martian.webp",
+    "targetHsb": [
+      120,
+      99,
+      53
+    ],
+    "active": true,
+    "sortOrder": 64,
+    "createdAt": "2026-05-22T21:01:02.786Z"
+  },
+  {
+    "slug": "marvin-the-martian",
+    "name": "Marvin the Martian",
+    "category": "Desenhos",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/marvin-the-martian.webp",
+    "targetHsb": [
+      120,
+      99,
+      53
+    ],
+    "active": true,
+    "sortOrder": 65,
+    "createdAt": "2026-05-22T21:01:02.786Z"
+  },
+  {
+    "slug": "marvin-the-martian",
+    "name": "Marvin the Martian",
+    "category": "Desenhos",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/marvin-the-martian.webp",
+    "targetHsb": [
+      120,
+      99,
+      53
+    ],
+    "active": true,
+    "sortOrder": 66,
+    "createdAt": "2026-05-22T21:01:02.786Z"
+  },
+  {
+    "slug": "ze-jacare",
+    "name": "Zé Jacaré",
+    "category": "Desenhos",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/ze-jacare.webp",
+    "targetHsb": [
+      53,
+      29,
+      44
+    ],
+    "active": true,
+    "sortOrder": 76,
+    "createdAt": "2026-05-22T21:03:28.146Z"
+  },
+  {
+    "slug": "ze-jacare",
+    "name": "Zé Jacaré",
+    "category": "Desenhos",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/ze-jacare.webp",
+    "targetHsb": [
+      53,
+      29,
+      44
+    ],
+    "active": true,
+    "sortOrder": 77,
+    "createdAt": "2026-05-22T21:03:28.146Z"
+  },
+  {
+    "slug": "ze-jacare",
+    "name": "Zé Jacaré",
+    "category": "Desenhos",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/ze-jacare.webp",
+    "targetHsb": [
+      53,
+      29,
+      44
+    ],
+    "active": true,
+    "sortOrder": 78,
+    "createdAt": "2026-05-22T21:03:28.146Z"
+  },
+  {
+    "slug": "charmander",
+    "name": "Charmander",
+    "category": "Pokemon",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/charmander.webp",
+    "targetHsb": [
+      23,
+      97,
+      83
+    ],
+    "active": true,
+    "sortOrder": 88,
+    "createdAt": "2026-05-22T21:05:09.279Z"
+  },
+  {
+    "slug": "charmander",
+    "name": "Charmander",
+    "category": "Pokemon",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/charmander.webp",
+    "targetHsb": [
+      23,
+      97,
+      83
+    ],
+    "active": true,
+    "sortOrder": 89,
+    "createdAt": "2026-05-22T21:05:09.279Z"
+  },
+  {
+    "slug": "charmander",
+    "name": "Charmander",
+    "category": "Pokemon",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/charmander.webp",
+    "targetHsb": [
+      23,
+      97,
+      83
+    ],
+    "active": true,
+    "sortOrder": 90,
+    "createdAt": "2026-05-22T21:05:09.279Z"
+  },
+  {
+    "slug": "meowth",
+    "name": "Meowth",
+    "category": "Pokemon",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/meowth.webp",
+    "targetHsb": [
+      42,
+      23,
+      88
+    ],
+    "active": true,
+    "sortOrder": 100,
+    "createdAt": "2026-05-22T21:06:40.146Z"
+  },
+  {
+    "slug": "meowth",
+    "name": "Meowth",
+    "category": "Pokemon",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/meowth.webp",
+    "targetHsb": [
+      42,
+      23,
+      88
+    ],
+    "active": true,
+    "sortOrder": 101,
+    "createdAt": "2026-05-22T21:06:40.146Z"
+  },
+  {
+    "slug": "meowth",
+    "name": "Meowth",
+    "category": "Pokemon",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/meowth.webp",
+    "targetHsb": [
+      42,
+      23,
+      88
+    ],
+    "active": true,
+    "sortOrder": 102,
+    "createdAt": "2026-05-22T21:06:40.146Z"
+  },
+  {
+    "slug": "dragonite",
+    "name": "Dragonite",
+    "category": "Pokemon",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/dragonite.webp",
+    "targetHsb": [
+      173,
+      72,
+      62
+    ],
+    "active": true,
+    "sortOrder": 112,
+    "createdAt": "2026-05-22T21:07:46.305Z"
+  },
+  {
+    "slug": "dragonite",
+    "name": "Dragonite",
+    "category": "Pokemon",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/dragonite.webp",
+    "targetHsb": [
+      173,
+      72,
+      62
+    ],
+    "active": true,
+    "sortOrder": 113,
+    "createdAt": "2026-05-22T21:07:46.305Z"
+  },
+  {
+    "slug": "dragonite",
+    "name": "Dragonite",
+    "category": "Pokemon",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/dragonite.webp",
+    "targetHsb": [
+      173,
+      72,
+      62
+    ],
+    "active": true,
+    "sortOrder": 114,
+    "createdAt": "2026-05-22T21:07:46.305Z"
+  },
+  {
+    "slug": "ash",
+    "name": "Ash",
+    "category": "Pokemon",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/ash.webp",
+    "targetHsb": [
+      227,
+      67,
+      69
+    ],
+    "active": true,
+    "sortOrder": 124,
+    "createdAt": "2026-05-22T21:12:04.257Z"
+  },
+  {
+    "slug": "ash",
+    "name": "Ash",
+    "category": "Pokemon",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/ash.webp",
+    "targetHsb": [
+      227,
+      67,
+      69
+    ],
+    "active": true,
+    "sortOrder": 125,
+    "createdAt": "2026-05-22T21:12:04.257Z"
+  },
+  {
+    "slug": "ash",
+    "name": "Ash",
+    "category": "Pokemon",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/ash.webp",
+    "targetHsb": [
+      227,
+      67,
+      69
+    ],
+    "active": true,
+    "sortOrder": 126,
+    "createdAt": "2026-05-22T21:12:04.257Z"
+  },
+  {
+    "slug": "pikachu",
+    "name": "Pikachu",
+    "category": "Pokemon",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/pikachu.webp",
+    "targetHsb": [
+      50,
+      90,
+      100
+    ],
+    "active": true,
+    "sortOrder": 136,
+    "createdAt": "2026-05-22T21:14:22.576Z"
+  },
+  {
+    "slug": "pikachu",
+    "name": "Pikachu",
+    "category": "Pokemon",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/pikachu.webp",
+    "targetHsb": [
+      50,
+      90,
+      100
+    ],
+    "active": true,
+    "sortOrder": 137,
+    "createdAt": "2026-05-22T21:14:22.576Z"
+  },
+  {
+    "slug": "pikachu",
+    "name": "Pikachu",
+    "category": "Pokemon",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/pikachu.webp",
+    "targetHsb": [
+      50,
+      90,
+      100
+    ],
+    "active": true,
+    "sortOrder": 138,
+    "createdAt": "2026-05-22T21:14:22.576Z"
+  },
+  {
+    "slug": "equipe-rocket",
+    "name": "Equipe Rocket",
+    "category": "Pokemon",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/equipe-rocket.webp",
+    "targetHsb": [
+      347,
+      71,
+      96
+    ],
+    "active": true,
+    "sortOrder": 148,
+    "createdAt": "2026-05-22T21:15:38.964Z"
+  },
+  {
+    "slug": "equipe-rocket",
+    "name": "Equipe Rocket",
+    "category": "Pokemon",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/equipe-rocket.webp",
+    "targetHsb": [
+      347,
+      71,
+      96
+    ],
+    "active": true,
+    "sortOrder": 149,
+    "createdAt": "2026-05-22T21:15:38.964Z"
+  },
+  {
+    "slug": "equipe-rocket",
+    "name": "Equipe Rocket",
+    "category": "Pokemon",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/equipe-rocket.webp",
+    "targetHsb": [
+      347,
+      71,
+      96
+    ],
+    "active": true,
+    "sortOrder": 150,
+    "createdAt": "2026-05-22T21:15:38.964Z"
+  },
+  {
+    "slug": "dick-vigarista-2",
+    "name": "Dick Vigarista 2",
+    "category": "Desenhos",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/dick-vigarista-2.webp",
+    "targetHsb": [
+      359,
+      100,
+      68
+    ],
+    "active": true,
+    "sortOrder": 160,
+    "createdAt": "2026-05-22T21:17:29.925Z"
+  },
+  {
+    "slug": "dick-vigarista-2",
+    "name": "Dick Vigarista 2",
+    "category": "Desenhos",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/dick-vigarista-2.webp",
+    "targetHsb": [
+      359,
+      100,
+      68
+    ],
+    "active": true,
+    "sortOrder": 161,
+    "createdAt": "2026-05-22T21:17:29.925Z"
+  },
+  {
+    "slug": "dick-vigarista-2",
+    "name": "Dick Vigarista 2",
+    "category": "Desenhos",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/dick-vigarista-2.webp",
+    "targetHsb": [
+      359,
+      100,
+      68
+    ],
+    "active": true,
+    "sortOrder": 162,
+    "createdAt": "2026-05-22T21:17:29.925Z"
+  },
+  {
+    "slug": "goku",
+    "name": "Goku",
+    "category": "DBZ",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/goku.webp",
+    "targetHsb": [
+      19,
+      91,
+      100
+    ],
+    "active": true,
+    "sortOrder": 172,
+    "createdAt": "2026-05-23T19:37:25.401Z"
+  },
+  {
+    "slug": "goku",
+    "name": "Goku",
+    "category": "DBZ",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/goku.webp",
+    "targetHsb": [
+      19,
+      91,
+      100
+    ],
+    "active": true,
+    "sortOrder": 173,
+    "createdAt": "2026-05-23T19:37:25.401Z"
+  },
+  {
+    "slug": "goku",
+    "name": "Goku",
+    "category": "DBZ",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/goku.webp",
+    "targetHsb": [
+      19,
+      91,
+      100
+    ],
+    "active": true,
+    "sortOrder": 174,
+    "createdAt": "2026-05-23T19:37:25.401Z"
+  },
+  {
+    "slug": "vegeta",
+    "name": "Vegeta",
+    "category": "DBZ",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/vegeta.webp",
+    "targetHsb": [
+      225,
+      61,
+      88
+    ],
+    "active": true,
+    "sortOrder": 184,
+    "createdAt": "2026-05-23T19:38:08.154Z"
+  },
+  {
+    "slug": "vegeta",
+    "name": "Vegeta",
+    "category": "DBZ",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/vegeta.webp",
+    "targetHsb": [
+      225,
+      61,
+      88
+    ],
+    "active": true,
+    "sortOrder": 185,
+    "createdAt": "2026-05-23T19:38:08.154Z"
+  },
+  {
+    "slug": "vegeta",
+    "name": "Vegeta",
+    "category": "DBZ",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/vegeta.webp",
+    "targetHsb": [
+      225,
+      61,
+      88
+    ],
+    "active": true,
+    "sortOrder": 186,
+    "createdAt": "2026-05-23T19:38:08.154Z"
+  },
+  {
+    "slug": "freeza",
+    "name": "Freeza",
+    "category": "DBZ",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/freeza.webp",
+    "targetHsb": [
+      277,
+      68,
+      79
+    ],
+    "active": true,
+    "sortOrder": 196,
+    "createdAt": "2026-05-23T19:39:32.121Z"
+  },
+  {
+    "slug": "freeza",
+    "name": "Freeza",
+    "category": "DBZ",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/freeza.webp",
+    "targetHsb": [
+      277,
+      68,
+      79
+    ],
+    "active": true,
+    "sortOrder": 197,
+    "createdAt": "2026-05-23T19:39:32.121Z"
+  },
+  {
+    "slug": "freeza",
+    "name": "Freeza",
+    "category": "DBZ",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/freeza.webp",
+    "targetHsb": [
+      277,
+      68,
+      79
+    ],
+    "active": true,
+    "sortOrder": 198,
+    "createdAt": "2026-05-23T19:39:32.121Z"
+  },
+  {
+    "slug": "majin-boo",
+    "name": "Majin Boo",
+    "category": "DBZ",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/majin-boo.webp",
+    "targetHsb": [
+      353,
+      22,
+      89
+    ],
+    "active": true,
+    "sortOrder": 208,
+    "createdAt": "2026-05-23T19:45:37.041Z"
+  },
+  {
+    "slug": "majin-boo",
+    "name": "Majin Boo",
+    "category": "DBZ",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/majin-boo.webp",
+    "targetHsb": [
+      353,
+      22,
+      89
+    ],
+    "active": true,
+    "sortOrder": 209,
+    "createdAt": "2026-05-23T19:45:37.041Z"
+  },
+  {
+    "slug": "majin-boo",
+    "name": "Majin Boo",
+    "category": "DBZ",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/majin-boo.webp",
+    "targetHsb": [
+      353,
+      22,
+      89
+    ],
+    "active": true,
+    "sortOrder": 210,
+    "createdAt": "2026-05-23T19:45:37.041Z"
+  },
+  {
+    "slug": "dragon-ball",
+    "name": "Dragon Ball",
+    "category": "DBZ",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/dragon-ball.webp",
+    "targetHsb": [
+      0,
+      82,
+      84
+    ],
+    "active": true,
+    "sortOrder": 220,
+    "createdAt": "2026-05-23T19:48:08.729Z"
+  },
+  {
+    "slug": "dragon-ball",
+    "name": "Dragon Ball",
+    "category": "DBZ",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/dragon-ball.webp",
+    "targetHsb": [
+      0,
+      82,
+      84
+    ],
+    "active": true,
+    "sortOrder": 221,
+    "createdAt": "2026-05-23T19:48:08.729Z"
+  },
+  {
+    "slug": "dragon-ball",
+    "name": "Dragon Ball",
+    "category": "DBZ",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/dragon-ball.webp",
+    "targetHsb": [
+      0,
+      82,
+      84
+    ],
+    "active": true,
+    "sortOrder": 222,
+    "createdAt": "2026-05-23T19:48:08.729Z"
+  },
+  {
+    "slug": "dragon-ball-2",
+    "name": "Dragon Ball 2",
+    "category": "DBZ",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/dragon-ball-2.webp",
+    "targetHsb": [
+      56,
+      85,
+      98
+    ],
+    "active": true,
+    "sortOrder": 232,
+    "createdAt": "2026-05-23T19:48:57.761Z"
+  },
+  {
+    "slug": "dragon-ball-2",
+    "name": "Dragon Ball 2",
+    "category": "DBZ",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/dragon-ball-2.webp",
+    "targetHsb": [
+      56,
+      85,
+      98
+    ],
+    "active": true,
+    "sortOrder": 233,
+    "createdAt": "2026-05-23T19:48:57.761Z"
+  },
+  {
+    "slug": "dragon-ball-2",
+    "name": "Dragon Ball 2",
+    "category": "DBZ",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/dragon-ball-2.webp",
+    "targetHsb": [
+      56,
+      85,
+      98
+    ],
+    "active": true,
+    "sortOrder": 234,
+    "createdAt": "2026-05-23T19:48:57.761Z"
+  },
+  {
+    "slug": "starbucks",
+    "name": "Starbucks",
+    "category": "Marcas",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/starbucks.png",
+    "targetHsb": [
+      156,
+      100,
+      44
+    ],
+    "active": true,
+    "sortOrder": 244,
+    "createdAt": "2026-05-24T03:20:59.959Z"
+  },
+  {
+    "slug": "starbucks",
+    "name": "Starbucks",
+    "category": "Marcas",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/starbucks.png",
+    "targetHsb": [
+      156,
+      100,
+      44
+    ],
+    "active": true,
+    "sortOrder": 245,
+    "createdAt": "2026-05-24T03:20:59.959Z"
+  },
+  {
+    "slug": "starbucks",
+    "name": "Starbucks",
+    "category": "Marcas",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/starbucks.png",
+    "targetHsb": [
+      156,
+      100,
+      44
+    ],
+    "active": true,
+    "sortOrder": 246,
+    "createdAt": "2026-05-24T03:20:59.959Z"
+  },
+  {
+    "slug": "mc-donald-s",
+    "name": "Mc Donald's",
+    "category": "Marcas",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/mc-donald-s.png",
+    "targetHsb": [
+      358,
+      100,
+      86
+    ],
+    "active": true,
+    "sortOrder": 256,
+    "createdAt": "2026-05-24T03:21:45.035Z"
+  },
+  {
+    "slug": "mc-donald-s",
+    "name": "Mc Donald's",
+    "category": "Marcas",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/mc-donald-s.png",
+    "targetHsb": [
+      358,
+      100,
+      86
+    ],
+    "active": true,
+    "sortOrder": 257,
+    "createdAt": "2026-05-24T03:21:45.035Z"
+  },
+  {
+    "slug": "mc-donald-s",
+    "name": "Mc Donald's",
+    "category": "Marcas",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/mc-donald-s.png",
+    "targetHsb": [
+      358,
+      100,
+      86
+    ],
+    "active": true,
+    "sortOrder": 258,
+    "createdAt": "2026-05-24T03:21:45.035Z"
+  },
+  {
+    "slug": "facebook",
+    "name": "Facebook",
+    "category": "Marcas",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/facebook.png",
+    "targetHsb": [
+      217,
+      97,
+      100
+    ],
+    "active": true,
+    "sortOrder": 280,
+    "createdAt": "2026-05-24T03:30:29.705Z"
+  },
+  {
+    "slug": "facebook",
+    "name": "Facebook",
+    "category": "Marcas",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/facebook.png",
+    "targetHsb": [
+      217,
+      97,
+      100
+    ],
+    "active": true,
+    "sortOrder": 281,
+    "createdAt": "2026-05-24T03:30:29.705Z"
+  },
+  {
+    "slug": "facebook",
+    "name": "Facebook",
+    "category": "Marcas",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/facebook.png",
+    "targetHsb": [
+      217,
+      97,
+      100
+    ],
+    "active": true,
+    "sortOrder": 282,
+    "createdAt": "2026-05-24T03:30:29.705Z"
+  },
+  {
+    "slug": "amazon-2",
+    "name": "Amazon 2",
+    "category": "Marcas",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/amazon-2.png",
+    "targetHsb": [
+      23,
+      100,
+      100
+    ],
+    "active": true,
+    "sortOrder": 364,
+    "createdAt": "2026-05-24T04:11:49.474Z"
+  },
+  {
+    "slug": "amazon-2",
+    "name": "Amazon 2",
+    "category": "Marcas",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/amazon-2.png",
+    "targetHsb": [
+      23,
+      100,
+      100
+    ],
+    "active": true,
+    "sortOrder": 365,
+    "createdAt": "2026-05-24T04:11:49.474Z"
+  },
+  {
+    "slug": "amazon-2",
+    "name": "Amazon 2",
+    "category": "Marcas",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/amazon-2.png",
+    "targetHsb": [
+      23,
+      100,
+      100
+    ],
+    "active": true,
+    "sortOrder": 366,
+    "createdAt": "2026-05-24T04:11:49.474Z"
+  },
+  {
+    "slug": "amazon",
+    "name": "Amazon",
+    "category": "Marcas",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/amazon.png",
+    "targetHsb": [
+      214,
+      42,
+      15
+    ],
+    "active": true,
+    "sortOrder": 376,
+    "createdAt": "2026-05-24T04:13:16.494Z"
+  },
+  {
+    "slug": "amazon",
+    "name": "Amazon",
+    "category": "Marcas",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/amazon.png",
+    "targetHsb": [
+      214,
+      42,
+      15
+    ],
+    "active": true,
+    "sortOrder": 377,
+    "createdAt": "2026-05-24T04:13:16.494Z"
+  },
+  {
+    "slug": "amazon",
+    "name": "Amazon",
+    "category": "Marcas",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/amazon.png",
+    "targetHsb": [
+      214,
+      42,
+      15
+    ],
+    "active": true,
+    "sortOrder": 378,
+    "createdAt": "2026-05-24T04:13:16.494Z"
+  },
+  {
+    "slug": "coca-cola",
+    "name": "Coca-Cola",
+    "category": "Marcas",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/coca-cola.png",
+    "targetHsb": [
+      357,
+      87,
+      87
+    ],
+    "active": true,
+    "sortOrder": 388,
+    "createdAt": "2026-05-24T04:15:08.763Z"
+  },
+  {
+    "slug": "coca-cola",
+    "name": "Coca-Cola",
+    "category": "Marcas",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/coca-cola.png",
+    "targetHsb": [
+      357,
+      87,
+      87
+    ],
+    "active": true,
+    "sortOrder": 389,
+    "createdAt": "2026-05-24T04:15:08.763Z"
+  },
+  {
+    "slug": "coca-cola",
+    "name": "Coca-Cola",
+    "category": "Marcas",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/coca-cola.png",
+    "targetHsb": [
+      357,
+      87,
+      87
+    ],
+    "active": true,
+    "sortOrder": 390,
+    "createdAt": "2026-05-24T04:15:08.763Z"
+  },
+  {
+    "slug": "spotify",
+    "name": "Spotify",
+    "category": "Marcas",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/spotify.png",
+    "targetHsb": [
+      141,
+      86,
+      84
+    ],
+    "active": true,
+    "sortOrder": 400,
+    "createdAt": "2026-05-24T04:16:40.682Z"
+  },
+  {
+    "slug": "spotify",
+    "name": "Spotify",
+    "category": "Marcas",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/spotify.png",
+    "targetHsb": [
+      141,
+      86,
+      84
+    ],
+    "active": true,
+    "sortOrder": 401,
+    "createdAt": "2026-05-24T04:16:40.682Z"
+  },
+  {
+    "slug": "spotify",
+    "name": "Spotify",
+    "category": "Marcas",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/spotify.png",
+    "targetHsb": [
+      141,
+      86,
+      84
+    ],
+    "active": true,
+    "sortOrder": 402,
+    "createdAt": "2026-05-24T04:16:40.682Z"
+  },
+  {
+    "slug": "subway",
+    "name": "Subway",
+    "category": "Marcas",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/subway.png",
+    "targetHsb": [
+      44,
+      93,
+      100
+    ],
+    "active": true,
+    "sortOrder": 412,
+    "createdAt": "2026-05-24T04:18:03.634Z"
+  },
+  {
+    "slug": "subway",
+    "name": "Subway",
+    "category": "Marcas",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/subway.png",
+    "targetHsb": [
+      44,
+      93,
+      100
+    ],
+    "active": true,
+    "sortOrder": 413,
+    "createdAt": "2026-05-24T04:18:03.634Z"
+  },
+  {
+    "slug": "subway",
+    "name": "Subway",
+    "category": "Marcas",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/subway.png",
+    "targetHsb": [
+      44,
+      93,
+      100
+    ],
+    "active": true,
+    "sortOrder": 414,
+    "createdAt": "2026-05-24T04:18:03.634Z"
+  },
+  {
+    "slug": "subway-2",
+    "name": "Subway 2",
+    "category": "Marcas",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/subway-2.png",
+    "targetHsb": [
+      148,
+      98,
+      55
+    ],
+    "active": true,
+    "sortOrder": 424,
+    "createdAt": "2026-05-24T04:19:05.818Z"
+  },
+  {
+    "slug": "subway-2",
+    "name": "Subway 2",
+    "category": "Marcas",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/subway-2.png",
+    "targetHsb": [
+      148,
+      98,
+      55
+    ],
+    "active": true,
+    "sortOrder": 425,
+    "createdAt": "2026-05-24T04:19:05.818Z"
+  },
+  {
+    "slug": "subway-2",
+    "name": "Subway 2",
+    "category": "Marcas",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/subway-2.png",
+    "targetHsb": [
+      148,
+      98,
+      55
+    ],
+    "active": true,
+    "sortOrder": 426,
+    "createdAt": "2026-05-24T04:19:05.818Z"
+  },
+  {
+    "slug": "netflix",
+    "name": "Netflix",
+    "category": "Marcas",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/netflix.png",
+    "targetHsb": [
+      357,
+      96,
+      90
+    ],
+    "active": true,
+    "sortOrder": 436,
+    "createdAt": "2026-05-24T04:20:07.656Z"
+  },
+  {
+    "slug": "netflix",
+    "name": "Netflix",
+    "category": "Marcas",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/netflix.png",
+    "targetHsb": [
+      357,
+      96,
+      90
+    ],
+    "active": true,
+    "sortOrder": 437,
+    "createdAt": "2026-05-24T04:20:07.656Z"
+  },
+  {
+    "slug": "netflix",
+    "name": "Netflix",
+    "category": "Marcas",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/netflix.png",
+    "targetHsb": [
+      357,
+      96,
+      90
+    ],
+    "active": true,
+    "sortOrder": 438,
+    "createdAt": "2026-05-24T04:20:07.656Z"
+  }
+]
