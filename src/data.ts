@@ -597,16 +597,8 @@ function withGeneratedVersion(imageSrc: string, createdAt?: string): string {
 }
 
 function withBaseAsset(imageSrc: string): string {
-  const normalizedSrc = normalizeGeneratedAssetFormat(imageSrc);
-  if (!normalizedSrc.startsWith("/assets/")) return normalizedSrc;
-  return `${import.meta.env.BASE_URL}${normalizedSrc.slice(1)}`;
-}
-
-function normalizeGeneratedAssetFormat(imageSrc: string): string {
-  return imageSrc.replace(
-    /(\/assets\/prompts\/generated\/[^?#]+)\.png(?=([?#]|$))/i,
-    "$1.webp",
-  );
+  if (!imageSrc.startsWith("/assets/")) return imageSrc;
+  return `${import.meta.env.BASE_URL}${imageSrc.slice(1)}`;
 }
 
 function readLocalScores(): LeaderboardEntry[] {

@@ -74,6 +74,7 @@ type CategoryDragState = {
   startX: number;
   startScrollLeft: number;
   dragged: boolean;
+  captured: boolean;
 } | null;
 
 const ROUND_COUNT = 5;
@@ -1634,8 +1635,8 @@ function handleCategoryPointerDown(event: PointerEvent): void {
     startX: event.clientX,
     startScrollLeft: refs.categoryList.scrollLeft,
     dragged: false,
+    captured: false,
   };
-  refs.categoryList.setPointerCapture(event.pointerId);
 }
 
 function handleCategoryPointerMove(event: PointerEvent): void {
@@ -1645,6 +1646,10 @@ function handleCategoryPointerMove(event: PointerEvent): void {
   if (Math.abs(deltaX) > 4) {
     categoryDragState.dragged = true;
     refs.categoryList.classList.add("dragging");
+    if (!categoryDragState.captured) {
+      refs.categoryList.setPointerCapture(event.pointerId);
+      categoryDragState.captured = true;
+    }
   }
   if (!categoryDragState.dragged) return;
 
