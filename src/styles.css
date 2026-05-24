@@ -636,6 +636,11 @@ svg {
   background: #000;
 }
 
+.game-card:has(.picker-screen.active) {
+  width: 510px;
+  height: 390px;
+}
+
 .picker-bg {
   position: absolute;
   inset: 0;
@@ -707,7 +712,12 @@ svg {
 
 .art-stage {
   position: absolute;
-  inset: 0 0 0 120px;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 120px;
+  width: 390px;
+  aspect-ratio: 1;
   z-index: 3;
   display: grid;
   place-items: center;
@@ -1721,6 +1731,11 @@ body:not([data-screen="intro"]) .footer-links {
     min-height: var(--mobile-viewport-height);
     border-radius: 0;
     box-shadow: none;
+  }
+
+  .game-card:has(.picker-screen.active) {
+    width: 100vw;
+    height: var(--mobile-viewport-height);
   }
 
   .intro-screen {
