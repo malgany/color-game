@@ -898,5 +898,455 @@
     "active": true,
     "sortOrder": 234,
     "createdAt": "2026-05-23T19:48:57.761Z"
+  },
+  {
+    "slug": "starbucks",
+    "name": "Starbucks",
+    "category": "Marcas",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/starbucks.png",
+    "targetHsb": [
+      156,
+      100,
+      44
+    ],
+    "active": true,
+    "sortOrder": 244,
+    "createdAt": "2026-05-24T03:20:59.959Z"
+  },
+  {
+    "slug": "starbucks",
+    "name": "Starbucks",
+    "category": "Marcas",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/starbucks.png",
+    "targetHsb": [
+      156,
+      100,
+      44
+    ],
+    "active": true,
+    "sortOrder": 245,
+    "createdAt": "2026-05-24T03:20:59.959Z"
+  },
+  {
+    "slug": "starbucks",
+    "name": "Starbucks",
+    "category": "Marcas",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/starbucks.png",
+    "targetHsb": [
+      156,
+      100,
+      44
+    ],
+    "active": true,
+    "sortOrder": 246,
+    "createdAt": "2026-05-24T03:20:59.959Z"
+  },
+  {
+    "slug": "mc-donald-s",
+    "name": "Mc Donald's",
+    "category": "Marcas",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/mc-donald-s.png",
+    "targetHsb": [
+      358,
+      100,
+      86
+    ],
+    "active": true,
+    "sortOrder": 256,
+    "createdAt": "2026-05-24T03:21:45.035Z"
+  },
+  {
+    "slug": "mc-donald-s",
+    "name": "Mc Donald's",
+    "category": "Marcas",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/mc-donald-s.png",
+    "targetHsb": [
+      358,
+      100,
+      86
+    ],
+    "active": true,
+    "sortOrder": 257,
+    "createdAt": "2026-05-24T03:21:45.035Z"
+  },
+  {
+    "slug": "mc-donald-s",
+    "name": "Mc Donald's",
+    "category": "Marcas",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/mc-donald-s.png",
+    "targetHsb": [
+      358,
+      100,
+      86
+    ],
+    "active": true,
+    "sortOrder": 258,
+    "createdAt": "2026-05-24T03:21:45.035Z"
+  },
+  {
+    "slug": "coca-cola",
+    "name": "Coca-Cola",
+    "category": "Marcas",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/coca-cola.png",
+    "targetHsb": [
+      356,
+      87,
+      89
+    ],
+    "active": true,
+    "sortOrder": 268,
+    "createdAt": "2026-05-24T03:22:46.766Z"
+  },
+  {
+    "slug": "coca-cola",
+    "name": "Coca-Cola",
+    "category": "Marcas",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/coca-cola.png",
+    "targetHsb": [
+      356,
+      87,
+      89
+    ],
+    "active": true,
+    "sortOrder": 269,
+    "createdAt": "2026-05-24T03:22:46.766Z"
+  },
+  {
+    "slug": "coca-cola",
+    "name": "Coca-Cola",
+    "category": "Marcas",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/coca-cola.png",
+    "targetHsb": [
+      356,
+      87,
+      89
+    ],
+    "active": true,
+    "sortOrder": 270,
+    "createdAt": "2026-05-24T03:22:46.766Z"
+  },
+  {
+    "slug": "facebook",
+    "name": "Facebook",
+    "category": "Marcas",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/facebook.png",
+    "targetHsb": [
+      217,
+      97,
+      100
+    ],
+    "active": true,
+    "sortOrder": 280,
+    "createdAt": "2026-05-24T03:30:29.705Z"
+  },
+  {
+    "slug": "facebook",
+    "name": "Facebook",
+    "category": "Marcas",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/facebook.png",
+    "targetHsb": [
+      217,
+      97,
+      100
+    ],
+    "active": true,
+    "sortOrder": 281,
+    "createdAt": "2026-05-24T03:30:29.705Z"
+  },
+  {
+    "slug": "facebook",
+    "name": "Facebook",
+    "category": "Marcas",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/facebook.png",
+    "targetHsb": [
+      217,
+      97,
+      100
+    ],
+    "active": true,
+    "sortOrder": 282,
+    "createdAt": "2026-05-24T03:30:29.705Z"
+  },
+  {
+    "slug": "amazon",
+    "name": "Amazon",
+    "category": "Marcas",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/amazon.png",
+    "targetHsb": [
+      214,
+      42,
+      15
+    ],
+    "active": true,
+    "sortOrder": 292,
+    "createdAt": "2026-05-24T03:30:56.731Z"
+  },
+  {
+    "slug": "amazon",
+    "name": "Amazon",
+    "category": "Marcas",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/amazon.png",
+    "targetHsb": [
+      214,
+      42,
+      15
+    ],
+    "active": true,
+    "sortOrder": 293,
+    "createdAt": "2026-05-24T03:30:56.731Z"
+  },
+  {
+    "slug": "amazon",
+    "name": "Amazon",
+    "category": "Marcas",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/amazon.png",
+    "targetHsb": [
+      214,
+      42,
+      15
+    ],
+    "active": true,
+    "sortOrder": 294,
+    "createdAt": "2026-05-24T03:30:56.731Z"
+  },
+  {
+    "slug": "subway",
+    "name": "Subway",
+    "category": "Marcas",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/subway.png",
+    "targetHsb": [
+      44,
+      93,
+      100
+    ],
+    "active": true,
+    "sortOrder": 304,
+    "createdAt": "2026-05-24T03:31:16.554Z"
+  },
+  {
+    "slug": "subway",
+    "name": "Subway",
+    "category": "Marcas",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/subway.png",
+    "targetHsb": [
+      44,
+      93,
+      100
+    ],
+    "active": true,
+    "sortOrder": 305,
+    "createdAt": "2026-05-24T03:31:16.554Z"
+  },
+  {
+    "slug": "subway",
+    "name": "Subway",
+    "category": "Marcas",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/subway.png",
+    "targetHsb": [
+      44,
+      93,
+      100
+    ],
+    "active": true,
+    "sortOrder": 306,
+    "createdAt": "2026-05-24T03:31:16.554Z"
+  },
+  {
+    "slug": "amazon-2",
+    "name": "Amazon 2",
+    "category": "Marcas",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/amazon-2.png",
+    "targetHsb": [
+      23,
+      100,
+      100
+    ],
+    "active": true,
+    "sortOrder": 316,
+    "createdAt": "2026-05-24T03:31:29.179Z"
+  },
+  {
+    "slug": "amazon-2",
+    "name": "Amazon 2",
+    "category": "Marcas",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/amazon-2.png",
+    "targetHsb": [
+      23,
+      100,
+      100
+    ],
+    "active": true,
+    "sortOrder": 317,
+    "createdAt": "2026-05-24T03:31:29.179Z"
+  },
+  {
+    "slug": "amazon-2",
+    "name": "Amazon 2",
+    "category": "Marcas",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/amazon-2.png",
+    "targetHsb": [
+      23,
+      100,
+      100
+    ],
+    "active": true,
+    "sortOrder": 318,
+    "createdAt": "2026-05-24T03:31:29.179Z"
+  },
+  {
+    "slug": "subway-2",
+    "name": "Subway 2",
+    "category": "Marcas",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/subway-2.png",
+    "targetHsb": [
+      148,
+      98,
+      55
+    ],
+    "active": true,
+    "sortOrder": 328,
+    "createdAt": "2026-05-24T03:32:06.219Z"
+  },
+  {
+    "slug": "subway-2",
+    "name": "Subway 2",
+    "category": "Marcas",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/subway-2.png",
+    "targetHsb": [
+      148,
+      98,
+      55
+    ],
+    "active": true,
+    "sortOrder": 329,
+    "createdAt": "2026-05-24T03:32:06.219Z"
+  },
+  {
+    "slug": "subway-2",
+    "name": "Subway 2",
+    "category": "Marcas",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/subway-2.png",
+    "targetHsb": [
+      148,
+      98,
+      55
+    ],
+    "active": true,
+    "sortOrder": 330,
+    "createdAt": "2026-05-24T03:32:06.219Z"
+  },
+  {
+    "slug": "spotify",
+    "name": "Spotify",
+    "category": "Marcas",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/spotify.png",
+    "targetHsb": [
+      141,
+      86,
+      84
+    ],
+    "active": true,
+    "sortOrder": 340,
+    "createdAt": "2026-05-24T03:32:51.316Z"
+  },
+  {
+    "slug": "spotify",
+    "name": "Spotify",
+    "category": "Marcas",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/spotify.png",
+    "targetHsb": [
+      141,
+      86,
+      84
+    ],
+    "active": true,
+    "sortOrder": 341,
+    "createdAt": "2026-05-24T03:32:51.316Z"
+  },
+  {
+    "slug": "spotify",
+    "name": "Spotify",
+    "category": "Marcas",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/spotify.png",
+    "targetHsb": [
+      141,
+      86,
+      84
+    ],
+    "active": true,
+    "sortOrder": 342,
+    "createdAt": "2026-05-24T03:32:51.316Z"
+  },
+  {
+    "slug": "netflix",
+    "name": "Netflix",
+    "category": "Marcas",
+    "difficulty": "easy",
+    "imageSrc": "/assets/prompts/generated/netflix.png",
+    "targetHsb": [
+      357,
+      96,
+      90
+    ],
+    "active": true,
+    "sortOrder": 352,
+    "createdAt": "2026-05-24T03:33:21.195Z"
+  },
+  {
+    "slug": "netflix",
+    "name": "Netflix",
+    "category": "Marcas",
+    "difficulty": "hard",
+    "imageSrc": "/assets/prompts/generated/netflix.png",
+    "targetHsb": [
+      357,
+      96,
+      90
+    ],
+    "active": true,
+    "sortOrder": 353,
+    "createdAt": "2026-05-24T03:33:21.195Z"
+  },
+  {
+    "slug": "netflix",
+    "name": "Netflix",
+    "category": "Marcas",
+    "difficulty": "brutal",
+    "imageSrc": "/assets/prompts/generated/netflix.png",
+    "targetHsb": [
+      357,
+      96,
+      90
+    ],
+    "active": true,
+    "sortOrder": 354,
+    "createdAt": "2026-05-24T03:33:21.195Z"
   }
 ]
