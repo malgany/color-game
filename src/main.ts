@@ -1570,6 +1570,7 @@ function renderCategoryChoices(): void {
             loading="lazy"
             decoding="async"
             draggable="false"
+            onerror="this.onerror=null;this.src='${assetSrc("assets/categories/all.webp")}'"
           />
           <span>${category === "all" ? ALL_CATEGORY_LABEL : escapeHtml(category)}</span>
         </button>
@@ -1608,6 +1609,7 @@ function categoryArtworkSrc(category: string): string {
   const key = normalizeCategoryKey(category);
   if (key === "dbz") return assetSrc("assets/categories/dbz.webp");
   if (key === "desenhos") return assetSrc("assets/categories/desenhos.webp");
+  if (key === "marcas") return assetSrc("assets/categories/marcas.png");
   if (key === "pokemon") return assetSrc("assets/categories/pokemon.webp");
   return assetSrc("assets/categories/all.webp");
 }
